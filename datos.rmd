@@ -351,8 +351,8 @@ descriptivos
 
 ### Edad (`age`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$age, breaks = 20, main = "Edad", xlab = "años", ylab = "Frecuencia",
      col = "darkblue", border = "white")
 boxplot(num$age, horizontal = FALSE, main = "Edad", xlab = "años",
@@ -366,8 +366,8 @@ par(op)
 
 ### Plataformas usadas (`platforms_used_count`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$platforms_used_count, breaks = 0.5:8.5, main = "Plataformas usadas",
      xlab = "número de plataformas", ylab = "Frecuencia",
      col = "darkblue", border = "white")
@@ -384,8 +384,8 @@ par(op)
 
 ### Horas diarias de pantalla (`daily_screen_hours`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$daily_screen_hours, breaks = 20, main = "Horas diarias de pantalla",
      xlab = "horas", ylab = "Frecuencia", col = "darkblue", border = "white")
 boxplot(num$daily_screen_hours, horizontal = FALSE, main = "Horas diarias de pantalla",
@@ -401,8 +401,8 @@ par(op)
 
 ### Notificaciones diarias (`daily_notifications`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$daily_notifications, breaks = 20, main = "Notificaciones diarias",
      xlab = "número de notificaciones", ylab = "Frecuencia",
      col = "darkblue", border = "white")
@@ -421,8 +421,8 @@ par(op)
 
 ### Minutos hasta revisar el celular al despertar (`minutes_to_first_check_after_waking`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$minutes_to_first_check_after_waking, breaks = 20,
      main = "Minutos hasta revisar el celular", xlab = "minutos",
      ylab = "Frecuencia", col = "darkblue", border = "white")
@@ -438,8 +438,8 @@ par(op)
 
 ### Horas de sueño promedio (`avg_sleep_hours`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$avg_sleep_hours, breaks = 20, main = "Horas de sueño promedio",
      xlab = "horas", ylab = "Frecuencia", col = "darkblue", border = "white")
 boxplot(num$avg_sleep_hours, horizontal = FALSE, main = "Horas de sueño promedio",
@@ -455,8 +455,8 @@ par(op)
 
 ### Ansiedad (`anxiety_score_0to27`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$anxiety_score_0to27, breaks = -0.5:27.5, main = "Puntaje de ansiedad",
      xlab = "puntaje (0 a 27)", ylab = "Frecuencia",
      col = "darkblue", border = "white")
@@ -471,8 +471,8 @@ par(op)
 
 ### Ánimo bajo (`low_mood_score_0to27`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$low_mood_score_0to27, breaks = -0.5:19.5, main = "Puntaje de ánimo bajo",
      xlab = "puntaje (0 a 27)", ylab = "Frecuencia",
      col = "darkblue", border = "white")
@@ -489,8 +489,8 @@ par(op)
 
 ### Satisfacción con la vida (`life_satisfaction_1to10`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$life_satisfaction_1to10, breaks = 0.5:10.5, main = "Satisfacción con la vida",
      xlab = "puntaje (1 a 10)", ylab = "Frecuencia",
      col = "darkblue", border = "white")
@@ -508,8 +508,8 @@ par(op)
 
 ### Soledad (`loneliness_1to10`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$loneliness_1to10, breaks = 0.5:10.5, main = "Soledad",
      xlab = "puntaje (1 a 10)", ylab = "Frecuencia",
      col = "darkblue", border = "white")
@@ -524,8 +524,8 @@ par(op)
 
 ### Autoestima (`self_esteem_1to10`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$self_esteem_1to10, breaks = 0.5:10.5, main = "Autoestima",
      xlab = "puntaje (1 a 10)", ylab = "Frecuencia",
      col = "darkblue", border = "white")
@@ -540,8 +540,8 @@ par(op)
 
 ### FOMO (`fomo_1to10`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$fomo_1to10, breaks = 0.5:10.5, main = "FOMO",
      xlab = "puntaje (1 a 10)", ylab = "Frecuencia",
      col = "darkblue", border = "white")
@@ -556,8 +556,8 @@ par(op)
 
 ### Comparación social (`social_comparison_1to10`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$social_comparison_1to10, breaks = 0.5:10.5, main = "Comparación social",
      xlab = "puntaje (1 a 10)", ylab = "Frecuencia",
      col = "darkblue", border = "white")
@@ -572,8 +572,8 @@ par(op)
 
 ### Actividad física (`physical_activity_days_per_week`)
 
-```{r, fig.width=10, fig.height=5}
-op <- par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+```{r, fig.align="center"}
+op <- par(mfrow = c(1, 2))
 hist(num$physical_activity_days_per_week, breaks = -0.5:7.5,
      main = "Días de actividad física por semana", xlab = "días por semana",
      ylab = "Frecuencia", col = "darkblue", border = "white")
@@ -599,16 +599,14 @@ Las diez variables categóricas completan la descripción de la muestra. Sus fre
 
 ### Género (`gender`)
 
-```{r, fig.width=10, fig.height=4}
-op <- par(mar = c(4, 10, 3, 1))
+```{r, fig.align="center"}
 barplot(table(datos$gender), horiz = TRUE, las = 1, main = "Género",
         xlab = "Frecuencia", col = "violet", border = "white", cex.names = 0.8)
-par(op)
 ```
 
 ### Ocupación (`occupation`)
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.align="center"}
 op <- par(mar = c(4, 10, 3, 1))
 barplot(table(datos$occupation), horiz = TRUE, las = 1, main = "Ocupación",
         xlab = "Frecuencia", col = "purple", border = "white", cex.names = 0.8)
@@ -617,7 +615,7 @@ par(op)
 
 ### Región (`region`)
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.align="center"}
 op <- par(mar = c(4, 10, 3, 1))
 barplot(table(datos$region), horiz = TRUE, las = 1, main = "Región",
         xlab = "Frecuencia", col = "green", border = "white", cex.names = 0.8)
@@ -626,7 +624,7 @@ par(op)
 
 ### Plataforma más usada (`most_used_platform`)
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.align="center"}
 op <- par(mar = c(4, 10, 3, 1))
 barplot(table(datos$most_used_platform), horiz = TRUE, las = 1,
         main = "Plataforma más usada", xlab = "Frecuencia",
@@ -636,7 +634,7 @@ par(op)
 
 ### Uso nocturno (`night_time_use`)
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.align="center"}
 op <- par(mar = c(4, 10, 3, 1))
 barplot(table(datos$night_time_use), horiz = TRUE, las = 1,
         main = "Uso nocturno", xlab = "Frecuencia",
@@ -646,7 +644,7 @@ par(op)
 
 ### Propósito principal (`primary_purpose`)
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.align="center"}
 op <- par(mar = c(4, 10, 3, 1))
 barplot(table(datos$primary_purpose), horiz = TRUE, las = 1,
         main = "Propósito principal", xlab = "Frecuencia",
@@ -656,7 +654,7 @@ par(op)
 
 ### Límites de tiempo en pantalla (`uses_screen_time_limits`)
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.align="center"}
 op <- par(mar = c(4, 10, 3, 1))
 barplot(table(datos$uses_screen_time_limits), horiz = TRUE, las = 1,
         main = "Límites de tiempo en pantalla", xlab = "Frecuencia",
@@ -666,7 +664,7 @@ par(op)
 
 ### Intento de detox digital (`attempted_digital_detox`)
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.align="center"}
 op <- par(mar = c(4, 10, 3, 1))
 barplot(table(datos$attempted_digital_detox), horiz = TRUE, las = 1,
         main = "Intento de detox digital", xlab = "Frecuencia",
@@ -676,7 +674,7 @@ par(op)
 
 ### Búsqueda de apoyo psicológico (`seeks_mental_health_support`)
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.align="center"}
 op <- par(mar = c(4, 10, 3, 1))
 barplot(table(datos$seeks_mental_health_support), horiz = TRUE, las = 1,
         main = "Búsqueda de apoyo psicológico", xlab = "Frecuencia",
@@ -686,7 +684,7 @@ par(op)
 
 ### Banda de bienestar (`wellbeing_band`)
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.align="center"}
 op <- par(mar = c(4, 10, 3, 1))
 barplot(table(datos$wellbeing_band), horiz = TRUE, las = 1,
         main = "Banda de bienestar", xlab = "Frecuencia",
