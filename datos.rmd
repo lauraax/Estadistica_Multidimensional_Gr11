@@ -21,9 +21,37 @@ knitr::opts_chunk$set(echo = TRUE, comment = "#>")
 
 # Contexto inicial
 
-El dataset que hemos seleccionado y que presentaremos, lleva como nombre: `"social_media_screentime_mental_health_2026"`. Este dataset (tal y como dice Kaggle en "About Dataset") relaciona el tiempo diario de pantalla con el ciclo de sueño, la ansiedad, entre otros. Es un dataset con más de 7000 registros. 
+¿De qué depende el tiempo diario de pantalla? ¿Se asocia con ansiedad, sueño, soledad y satisfacción con la vida?
 
-Es importante aclarar que estos datos son simulados con el fin de estimular el aprendizaje en áreas como machine-learning, entre otras. Tanto los autores como nosotros, enfatizamos encarecidamente que estos datos no se usen para un diagnóstico médico real o directamente como guía para el área de la salud. 
+El dataset que hemos seleccionado y que presentaremos, lleva como nombre: `"social_media_screentime_mental_health_2026"`. Este dataset (tal y como dice Kaggle en "About Dataset") relaciona el tiempo diario de pantalla con el ciclo de sueño, la ansiedad, entre otros. Es un dataset con más de 7000 registros.
+
+Es importante aclarar que estos datos son simulados con el fin de estimular el aprendizaje en áreas como machine-learning, entre otras. Tanto los autores como nosotros, enfatizamos encarecidamente que estos datos no se usen para un diagnóstico médico real o directamente como guía para el área de la salud.
+
+### Las 12 Variables Más Importantes
+
+1.  daily_screen_hours: Horas diarias frente a la pantalla. Mide la exposición total directa al contenido digital.
+
+2.  anxiety_score_0to27: Puntuación de ansiedad (escala 0 a 27). Evalúa la gravedad de los síntomas de ansiedad del participante.
+
+3.  low_mood_score_0to27: Puntuación de estado de ánimo bajo/depresión (escala 0 a 27). Mide la frecuencia e intensidad de emociones negativas o desánimo.
+
+4.  life_satisfaction_1to10: Nivel de satisfacción con la vida (escala 1 a 10). Métrica clave de bienestar percibido.
+
+5.  wellbeing_band: Clasificación categórica del bienestar general (ej. At-risk, Moderate, Thriving), actuando como la variable objetivo o resumen del estado de salud mental.
+
+6.  avg_sleep_hours: Horas promedio de sueño nocturno. Crucial para analizar el impacto del uso de pantallas en la higiene del descanso.
+
+7.  fomo_1to10: Grado de "Fear of Missing Out" o miedo a perderse de algo (escala 1 a 10). Mide la ansiedad social asociada a estar desconectado.
+
+8.  social_comparison_1to10: Tendencia a compararse socialmente en redes (escala 1 a 10). Refleja cómo impacta el contenido ajeno en la autopercepción.
+
+9.  night_time_use: Frecuencia de uso nocturno antes de dormir (ej. Never, Sometimes, Every night).
+
+10. most_used_platform: La plataforma principal que utiliza el usuario (ej. TikTok, Instagram, YouTube, LinkedIn).
+
+11. age: Edad del participante (rango de 13 a 71 años, promedio de 29 años), clave para segmentaciones demográficas y comparaciones generacionales.
+
+12. physical_activity_days_per_week: Días a la semana con actividad física. Mide el hábito saludable como factor moderador del estrés o la ansiedad.
 
 A continuación, se dará pie al análisis de este dataset.
 
@@ -43,10 +71,10 @@ datos <- read.table("social_media_screentime_mental_health_2026.csv",
                    header = TRUE, sep = ",", dec = ".")
 ```
 
-> **¿Qué podemos observar aquí?**
-Si bien podemos simplemente usar la función `read.csv`, la manera en la que lo hacemos, permite visualizar que separador se usa y que caracter decimal separa los valores números, además de poder identificar los `NA` existentes en el dataset.
+> **¿Qué podemos observar aquí?** Si bien podemos simplemente usar la función `read.csv`, la manera en la que lo hacemos, permite visualizar que separador se usa y que caracter decimal separa los valores números, además de poder identificar los `NA` existentes en el dataset.
 
 ## Identificación de filas y variables
+
 Comparamos nuestra primera impresión, con lo que arroje la impresión de `names(datos)`. Esto nos mostrará el nombre de cada variable, que usaremos para rectificar que todas las variables tengan su nombre correcto.
 
 ```{r}
@@ -61,9 +89,9 @@ dim(datos); str(datos)
 
 Notamos que, efectivamente nuestro dataset tiene 7000 filas y 25 columnas (o variables). y también podemos analizar que:
 
-  - El dataset cuenta con 11 variables `chr` y con 14 de tipo numérica.
+- El dataset cuenta con 11 variables `chr` y con 14 de tipo numérica.
 
-  - Cada variable identificada como `chr` debe volverse un factor.
+- Cada variable identificada como `chr` debe volverse un factor.
 
 Antes de hacer la conversión, necesitamos mirar que datos tienen nuestras variables categóricas. Esto con el fin de conocer si existen variables categóricas de tipo ordinales.
 
@@ -104,13 +132,14 @@ Miramos nuevamente el tipo de dato que es cada variable para corroborar:
 dim(datos); str(datos)
 ```
 
-> **¿Qué hicimos?** Primero, excluimos la variable `participant_id`, ya que si la convertimos en un factor, resultaría en una lista con 7000 niveles. Luego, separamos las variables en "nominales y cardinales". 
+> **¿Qué hicimos?** Primero, excluimos la variable `participant_id`, ya que si la convertimos en un factor, resultaría en una lista con 7000 niveles. Luego, separamos las variables en "nominales y cardinales".
 >
-A las **nominales** se les aplicó la conversión de `chr` a `Factor`.
+> A las **nominales** se les aplicó la conversión de `chr` a `Factor`.
 >
-A las **ordinales** debemos tratarlas de forma especial, como se trata de una variable con valores que deben tener un orden específico y R organiza un factor de forma alfabética, si no les damos este trato, no organizará de forma correcta estas variables. `levels` permite que organicemos el `Factor` de la forma que nosotros consideremos correcta.
+> A las **ordinales** debemos tratarlas de forma especial, como se trata de una variable con valores que deben tener un orden específico y R organiza un factor de forma alfabética, si no les damos este trato, no organizará de forma correcta estas variables. `levels` permite que organicemos el `Factor` de la forma que nosotros consideremos correcta.
 
 ## Identificación de anomalías, NA's y duplicados
+
 Anteriormente, al usar la función `table()` nos anticipó la existencia de `NA's` en el dataset (especificamente 70 en la variable `gender`). A continuación identificaremos y trataremos estas anomalías.
 
 ```{r}
@@ -131,8 +160,7 @@ O podemos ver los **NA's** existentes por fila en el dataset:
 sum(!complete.cases(datos))
 ```
 
-Sin embargo, vemos que nos arroja 173 y no 175.
-> **¿Por qué sucede?** La diferencia se debe a que colSums(is.na()) cuenta celdas (cada variable por separado) mientras que complete.cases() cuenta filas. Esto puede significar que dos participantes tienen NA simultáneamente en `gender` y en `avg_sleep_hours`, de modo que sus filas se cuentan una sola vez.
+Sin embargo, vemos que nos arroja 173 y no 175. \> **¿Por qué sucede?** La diferencia se debe a que colSums(is.na()) cuenta celdas (cada variable por separado) mientras que complete.cases() cuenta filas. Esto puede significar que dos participantes tienen NA simultáneamente en `gender` y en `avg_sleep_hours`, de modo que sus filas se cuentan una sola vez.
 
 Podemos averiguarlo con un gráfico.
 
@@ -169,14 +197,12 @@ round(mean(is.na(datos$gender)) * 100, 2)
 round(mean(!complete.cases(datos)) * 100, 1)
 ```
 
-`avg_sleep_hours` con 105 casos (1.5%) y `gender` con 70
-casos (1.0%). En total, 173 filas (2.5%) tienen al menos un `NA`.
-
+`avg_sleep_hours` con 105 casos (1.5%) y `gender` con 70 casos (1.0%). En total, 173 filas (2.5%) tienen al menos un `NA`.
 
 **¿Qué podemos hacer con estos datos?** Recordemos la tabla vista en clase:
 
 | Estrategia | Qué hace | El costo |
-|---|---|---|
+|------------------------|------------------------|------------------------|
 | **Casos completos** | Borra la fila entera | Pierde $n$ y sesga si los faltantes no son aleatorios |
 | **Por pares** | Usa lo que haya en cada par | La matriz de correlación puede dejar de ser definida positiva → **PCA imposible** |
 | **Imputar por la media** | Rellena con el promedio | **Reduce artificialmente la varianza** y aplana las correlaciones |
@@ -185,7 +211,7 @@ Investigando, encontramos que existen "criterios" que identifican el por qué un
 
 **MCAR (Missing Completely At Random):** "faltante completamente al azar" El dato falta por una razón que no tiene nada que ver con nada.
 
-**MAR (Missing At Random):** "faltante al azar" El dato falta por algo relacionado con otras variables que se observaron. 
+**MAR (Missing At Random):** "faltante al azar" El dato falta por algo relacionado con otras variables que se observaron.
 
 **MNAR (Missing Not At Random):** "faltante no al azar" El dato falta por el valor mismo que falta. por ejemplo: los que duermen muy poquitas horas son justo los que no quieren reportarlo. Este es el peor caso, y no hay forma limpia de arreglarlo.
 
@@ -193,7 +219,7 @@ Investigando, encontramos que existen "criterios" que identifican el por qué un
 
 > **¿Entonces que haremos?** Para `gender` es más sencillo que para `avg_sleep_hours`. como en gender existe un valor denominado "prefer not to say", los `NA´s` en esta variable pasarán a tomar el valor de "prefer not to say".
 >
-Para `avg_sleep_hours` debemos identificar que tipo de datos faltantes tenemos (MCAR - MAR - MNAR). La prueba solo puede descartar MCAR (o no descartarlo). Distinguir MAR de MNAR es imposible en principio: ambos pueden generar exactamente los mismos datos observados.
+> Para `avg_sleep_hours` debemos identificar que tipo de datos faltantes tenemos (MCAR - MAR - MNAR). La prueba solo puede descartar MCAR (o no descartarlo). Distinguir MAR de MNAR es imposible en principio: ambos pueden generar exactamente los mismos datos observados.
 
 Entonces, procedemos a imputar los `NA´s` en `gender`:
 
@@ -214,19 +240,18 @@ Aplicaremos una prueba conjunta, que combina una regresión logística y una pru
 
 > **Regresión logística:** Sirve para predecir un resultado de sí/no. La regresión estima cómo cambia la probabilidad de que sea "sí" según las otras variables.
 >
-**Verosimilitud:** Es un número que dice "qué tan bien explica este modelo los datos que observamos". Sí el resultado es más alto, indica que es mejor.
+> **Verosimilitud:** Es un número que dice "qué tan bien explica este modelo los datos que observamos". Sí el resultado es más alto, indica que es mejor.
 >
-**Razón de verosimilitud (LRT):** Acá se comparan dos modelos
+> **Razón de verosimilitud (LRT):** Acá se comparan dos modelos
 >
-  - Modelo 0 (nulo): predice la probabilidad de que falte usando nada (solo el promedio general (105/7000 = 1.5% para todos)).
-  - Modelo 1: la predice usando todas las demás variables (las otras 13).
+> - Modelo 0 (nulo): predice la probabilidad de que falte usando nada (solo el promedio general (105/7000 = 1.5% para todos)).
+> - Modelo 1: la predice usando todas las demás variables (las otras 13).
 >
-Si el modelo 1 explica mucho mejor que el 0, entonces esas variables sí traen información sobre la ausencia (significa que no cumple con el criterio MCAR).
+> Si el modelo 1 explica mucho mejor que el 0, entonces esas variables sí traen información sobre la ausencia (significa que no cumple con el criterio MCAR).
 >
-La comparación se mide con **chi-cuadrado (χ²):** un número que resume cuánto mejoró. Más grande significa que mejoró más. Luego se convierte en un p-valor.
+> La comparación se mide con **chi-cuadrado (χ²):** un número que resume cuánto mejoró. Más grande significa que mejoró más. Luego se convierte en un p-valor.
 >
->**El p-valor**: Nos indica a probabilidad de observar un dato con una diferencia significativa (como en la variable `daily_notifications` por ejemplo). su criterio es $p < 0.05$. Si $p$ cumple este criterio, lo que vemos no es meramente azar.
-
+> **El p-valor**: Nos indica a probabilidad de observar un dato con una diferencia significativa (como en la variable `daily_notifications` por ejemplo). su criterio es $p < 0.05$. Si $p$ cumple este criterio, lo que vemos no es meramente azar.
 
 Definimos quienes tienen el dato faltante (105 de 7000):
 
@@ -251,9 +276,9 @@ A continuación ejecutaremos una prueba conjunta de MCAR, que combina una regres
 
 Donde:
 
-  - `m0` es el modelo nulo: predice la ausencia usando nada, solo la tasa general de 1.5% para todos
-  - `m1` es el modelo completo: intenta predecir la ausencia usando las 13 variables.  Aquí el resultado es "¿está vacía la celda de sueño?" (sí/no) para cada uno de los 7000 participantes.
-  - `anova(..., test = "LRT")` pregunta: ¿el modelo completo predice mejor que el nulo? Si sí, las variables traen información sobre quién falta (es decir, la ausencia no es aleatoria).
+- `m0` es el modelo nulo: predice la ausencia usando nada, solo la tasa general de 1.5% para todos
+- `m1` es el modelo completo: intenta predecir la ausencia usando las 13 variables. Aquí el resultado es "¿está vacía la celda de sueño?" (sí/no) para cada uno de los 7000 participantes.
+- `anova(..., test = "LRT")` pregunta: ¿el modelo completo predice mejor que el nulo? Si sí, las variables traen información sobre quién falta (es decir, la ausencia no es aleatoria).
 
 ```{r}
 m0 <- glm(na_s ~ 1, family = binomial)
@@ -288,6 +313,7 @@ La idea a continuación es realizar un `summary()` con el fin de identificar las
 num <- completar_datos[, sapply(completar_datos, is.numeric)]
 str(num)
 ```
+
 ```{r}
 sesgo <- function(x) {
   x <- x[!is.na(x)]
@@ -316,20 +342,26 @@ descriptivos
 
 `num` reúne 14 variables, pero no todas son continuas en sentido estricto: `platforms_used_count` (1–8), `physical_activity_days_per_week (0–7)` y las siete escalas de 1 a 10 son ordinales o recuentos. Las tratamos como numéricas por conveniencia asumiendo que los intervalos entre categorías son comparables.
 
-
 <!-- A continuación, determinamos el número óptimo para la distribución del histograma que haremos -->
 
 <!-- ```{r} -->
+
 <!-- ceiling(log2(nrow(completar_datos))) + 1 -->
+
 <!-- ``` -->
 
 <!-- El óptimo es 14 clases, aunque como vemos en los gráficos, parece mucho mejor el histograma con 20 clases -->
 
 <!-- ```{r} -->
+
 <!-- par(mfrow = c(1, 3)) -->
+
 <!-- hist(completar_datos$daily_screen_hours, breaks = 5,  main = "5 clases",  xlab = "Horas al día en pantalla", ylab = "Frecuencia", col = "darkblue", border = "white") -->
+
 <!-- hist(completar_datos$daily_screen_hours, breaks = 14, main = "14 clases", xlab = "Horas al día en pantalla", ylab = "Frecuencia", col = "darkblue", border = "white") -->
+
 <!-- hist(completar_datos$daily_screen_hours, breaks = 20, main = "20 clases", xlab = "Horas al día en pantalla", ylab = "Frecuencia", col = "darkblue", border = "white") -->
+
 <!-- ``` -->
 
 <!-- ## Estandarización de las variables numéricas -->
@@ -337,11 +369,14 @@ descriptivos
 <!-- Como nuestras variables viven en escalas muy distintas (notificaciones de 5 a 400, autoestima de 1 a 10), calculamos también su versión estandarizada con `scale()`. Esto le resta la media y divide por la desviación estándar a cada columna, dejándolas todas con media 0 y desviación 1. **No la usamos para el análisis univariado que sigue** (estandarizar es una transformación lineal: no cambia la forma de la distribución, solo el eje x), sino más adelante, cuando necesitemos comparar varias variables en un mismo gráfico o calcular distancias de Mahalanobis, donde sí importa que estén en la misma escala. -->
 
 <!-- ```{r} -->
-<!-- num_scaled <- as.data.frame(scale(num)) -->
-<!-- round(colMeans(num_scaled), 4) -->
-<!-- round(apply(num_scaled, 2, sd), 4) -->
-<!-- ``` -->
 
+<!-- num_scaled <- as.data.frame(scale(num)) -->
+
+<!-- round(colMeans(num_scaled), 4) -->
+
+<!-- round(apply(num_scaled, 2, sd), 4) -->
+
+<!-- ``` -->
 
 <!-- Miramos la distribución de cada variable por separado, en su escala original (`num`), para que las conclusiones se puedan leer directamente en las unidades de cada una (horas, puntaje 1-10, etc.). -->
 
@@ -736,7 +771,7 @@ data.frame(variable_1 = colnames(num)[idx[o, 1]],
            r = round(c0[idx[o, ]], 3))
 ```
 
-**Solo nueve de los 91 pares (10%) superan |r| = 0.30.** Y de esos nueve, **ocho involucran a `daily_screen_hours`**; la única excepción es ansiedad con notificaciones (0.32).
+**Solo nueve de los 91 pares (10%) superan \|r\| = 0.30.** Y de esos nueve, **ocho involucran a `daily_screen_hours`**; la única excepción es ansiedad con notificaciones (0.32).
 
 Eso revela la forma real del conjunto: no hay un bloque de variables que covaríen entre sí, sino **una variable que se conecta con casi todas las demás**. Medido:
 
@@ -747,75 +782,277 @@ Tres veces menor. El tiempo de pantalla no es una variable más de la matriz: es
 
 **Y también importa lo que no correlaciona.** La edad (0.007), los minutos hasta revisar el celular al despertar (0.010), la actividad física (0.004) y el número de plataformas (−0.013) son **ruido puro**. Son cuatro de las explicaciones más intuitivas del uso problemático —que sea cosa de los jóvenes, de la inmediatez al despertar, del sedentarismo o de tener muchas redes— y ninguna se sostiene en estos datos.
 
-### Comparación de dos variables
+## Comparación de dos variables
 
-Con el mapa general a la vista, pasamos al detalle. Cada variable numérica ya trae su propio boxplot, así que el siguiente paso es comparar dos variables a la vez, empezando por un boxplot bivariante.
+Con el mapa general a la vista, pasamos al detalle. Cada variable numérica ya trae su propio boxplot, así que el siguiente paso es comparar dos variables a la vez.De los 91 pares tenemos 9 que superan el **\|r\| = 0.30**, por lo que haremos la comparacion de esos.
 
-```{r}
-boxplot(avg_sleep_hours ~ self_esteem_1to10, data = completar_datos,
-        main = "Autoestima según las horas de sueño",
-        xlab = "Autoestima", ylab = "promedio de horas de sueño",
-        col = "lightyellow")
-```
-
-No podemos hacer un boxplot de todas las variables a la vez, puesto que nuestro dataset contiene más que solo variables numéricas
+### 1. `daily_screen_hours` vs `daily_notifications`
 
 ```{r}
-plot(completar_datos$daily_screen_hours, completar_datos$age,
-     pch = 16, col = rgb(0, 0, 0, 0.15),
-     xlab = "Horas diarias en pantalla", ylab = "edad",
-     main = "Correlación entre la edad y el tiempo diario de pantalla")
+library(ggplot2)
+library(patchwork)
+
+g1 <- ggplot(completar_datos,
+             aes(x = daily_screen_hours, y = daily_notifications)) +
+  geom_point(alpha = 0.12, color = "steelblue") +
+  geom_smooth(method = "lm", color = "firebrick", se = TRUE) +
+  labs(title = "Notificaciones diarias según horas de pantalla",
+       x = "Horas diarias de pantalla", y = "Notificaciones diarias")
+
+# Traducción a puntos: cuartil bajo vs cuartil alto
+q <- quantile(completar_datos$daily_screen_hours, c(.25, .75))
+bajo <- completar_datos$daily_notifications[completar_datos$daily_screen_hours <= q[1]]
+alto <- completar_datos$daily_notifications[completar_datos$daily_screen_hours >= q[2]]
+c(q1_horas = round(q[1], 2), q3_horas = round(q[3], 2),
+  notif_q1 = round(mean(bajo), 1), notif_q3 = round(mean(alto), 1),
+  diferencia = round(mean(alto) - mean(bajo), 1))
+
+# Correlaciones
+c(pearson  = round(cor(completar_datos$daily_screen_hours,
+                       completar_datos$daily_notifications), 3),
+  spearman = round(cor(completar_datos$daily_screen_hours,
+                       completar_datos$daily_notifications,
+                       method = "spearman"), 3))
+g1
 ```
 
-Mediante el grafico de densidad de Kernel,analizamos 3 variables con un h diferente que se calcula con `bw.nrd0()` y ajusta el suavisado a la dispersion de cada variable. `daily_screen_hours` se ve que tiene una distribucion asimetrica positiva dejando en claro que la mayoria de personas ve el celular entre 2-3 horas y una minoria de gente tiene un uso muy alto. La variable `avg_sleep_hours` se ve que tiene un distribucion mas simetrica con un h de 0.134 porque tiene una dispersion baja. La variable `anxiety_score_0to27` tiene una despersion mas alta, por eso el h, ademas de mostrar una asimetria positiva.
+La nube tiene una forma de elipse inclinada hacia arriba, sin curvatura y sin grupos aparte. Con una correlación de Pearson de 0.606, parecida a la de Spearman, la más alta que se verá en el dataset. Podemos decir entonces que más notificaciones llevan a que la persona vea el celular más veces. Y así mismo quien gasta mas horas en el celular recibe más notificaciones, representando entonces la frecuencia de interrupción y la duración total.
+
+### 2. `daily_screen_hours` vs `anxiety_score_0to27`
 
 ```{r}
-par(mfrow = c(1, 3))
-for (v in c("daily_screen_hours", "avg_sleep_hours", "anxiety_score_0to27")) {
-  x <- completar_datos[[v]]
-  h <- bw.nrd0(x)
-  plot(density(x, bw = h), lwd = 2,
-       main = paste0(v, "\n(h = ", round(h, 3), ")"), xlab = v)
-  rug(x)
-}
-par(mfrow = c(1, 1))
+g2 <- ggplot(completar_datos,
+             aes(x = daily_screen_hours, y = anxiety_score_0to27)) +
+  geom_point(alpha = 0.12, color = "steelblue") +
+  geom_smooth(method = "lm", color = "firebrick", se = TRUE) +
+  labs(title = "Ansiedad según horas de pantalla",
+       x = "Horas diarias de pantalla", y = "Puntaje de ansiedad (0-27)")
+
+q <- quantile(completar_datos$daily_screen_hours, c(.25, .75))
+bajo <- completar_datos$anxiety_score_0to27[completar_datos$daily_screen_hours <= q[1]]
+alto <- completar_datos$anxiety_score_0to27[completar_datos$daily_screen_hours >= q[2]]
+c(anx_q1 = round(mean(bajo), 2), anx_q3 = round(mean(alto), 2),
+  dif_puntos = round(mean(alto) - mean(bajo), 2))
+
+c(pearson  = round(cor(completar_datos$daily_screen_hours,
+                       completar_datos$anxiety_score_0to27), 3),
+  spearman = round(cor(completar_datos$daily_screen_hours,
+                       completar_datos$anxiety_score_0to27,
+                       method = "spearman"), 3))
+g2
 ```
 
-Ahora usamos otro grafico de densidad de Kernel pero superponiendo 3 curvas, una por grupo de `wellbeing_band`. Cada grupo tiene un tiempo de pantalla muy distinto, Good se concentra bajo, Moderate en el medio y At-risk esta mucho mas ancha.
+La nube alargada y lineal. Entre el cuartil bajo y el alto de pantalla hay una diferencia de 6.15 puntos.
+Se nota un patrón concreto: quien pasa más horas frente a la pantalla reporta más síntomas de ansiedad, y la diferencia entre el cuartil bajo y el alto en un contexto médico separa a alguien con ansiedad moderada a alguien con ansiedad alta. Se puede interpretar como que la pantalla genere ansiedad (por comparación, sobreestimulación, FOMO) pero también puede ser que la persona que esta ansiosa busque de la pantalla para calmarse.No se puede saber cual es la lectura correcta, sin embargo sabemos que son dos variables de las que no se puede habolar de una sin la otra.
 
+### 3. `fomo_1to10` vs `daily_screen_hours`
 ```{r}
-bandas <- unique(completar_datos$wellbeing_band)
-h <- bw.nrd0(completar_datos$daily_screen_hours)
+g4 <- ggplot(completar_datos,
+       aes(x = factor(fomo_1to10), y = daily_screen_hours)) +
+  geom_boxplot(fill = "lightblue", outlier.alpha = 0.15) +
+  labs(title = "Horas de pantalla según nivel de FOMO",
+       x = "FOMO (1-10)", y = "Horas diarias de pantalla")
 
-plot(density(completar_datos$daily_screen_hours, bw = h), type = "n",
-     main = paste0("Horas de pantalla por banda de bienestar (h = ", round(h, 3), ")"),
-     xlab = "horas diarias")
-for (i in seq_along(bandas)) {
-  sub <- completar_datos$daily_screen_hours[completar_datos$wellbeing_band == bandas[i]]
-  lines(density(sub, bw = h), col = i, lwd = 2)
-}
-legend("topright", legend = bandas, col = seq_along(bandas), lwd = 2, bty = "n")
+q <- quantile(completar_datos$daily_screen_hours, c(.25, .75))
+bajo <- completar_datos$fomo_1to10[completar_datos$daily_screen_hours <= q[1]]
+alto <- completar_datos$fomo_1to10[completar_datos$daily_screen_hours >= q[2]]
+c(fomo_q1 = round(mean(bajo), 2), fomo_q3 = round(mean(alto), 2),
+  dif_puntos = round(mean(alto) - mean(bajo), 2))
+g4
 ```
+FOMO solo toma 10 valores enteros, así que un scatterplot convencional no permite ver la densidad. Por eso se grafica el promedio de horas para cada nivel de FOMO.
 
-En este diagrama de dispersión, donde analizamos si las horas de pantalla determinan la ansiedad de una persona. Se ve una nube ancha con una correlacion positiva pero que no explica nada al simplificar una relacion con bastante ruido.
+El patrón es claro y monótono: la media de horas de pantalla sube de manera consistente con cada nivel de FOMO, y los intervalos de confianza no se solapan entre los niveles extremos (FOMO 1 vs FOMO 10). La diferencia de quartiles (2.26 puntos de 10) es un efecto moderado pero real. Lo importante es que este par no tiene atípicos y es casi simétrico, así que no es un artefacto de unos pocos usuarios extremos, es una fuerte tendencia de toda la muestra.
 
+Describe un comportamiento especifico: quien teme quedarse fuera de lo que pasa en las redes, pasa más tiempo en ellas. Y tiene sentido puesto que el FOMO empuja a revisar constantemente para "no perderse nada".
+
+### 4. `daily_screen_hours` vs `avg_sleep_hours`
 ```{r}
-plot(completar_datos$daily_screen_hours, completar_datos$anxiety_score_0to27,
-     pch = 19, col = rgb(0, 0, 0, 0.35),
-     xlab = "horas diarias de pantalla", ylab = "puntaje de ansiedad (0-27)",
-     main = "¿La correlación describe bien lo que pasa?")
-abline(lm(anxiety_score_0to27 ~ daily_screen_hours, data = completar_datos),
-       col = "firebrick", lwd = 2)
+g3 <- ggplot(completar_datos,
+             aes(x = daily_screen_hours, y = avg_sleep_hours)) +
+  geom_point(alpha = 0.12, color = "steelblue") +
+  geom_smooth(method = "lm", color = "firebrick", se = TRUE) +
+  labs(title = "Horas de sueño según horas de pantalla",
+       x = "Horas diarias de pantalla", y = "Horas de sueño promedio")
 
-cor(completar_datos$daily_screen_hours, completar_datos$anxiety_score_0to27)
+q <- quantile(completar_datos$daily_screen_hours, c(.25, .75))
+bajo <- completar_datos$avg_sleep_hours[completar_datos$daily_screen_hours <= q[1]]
+alto <- completar_datos$avg_sleep_hours[completar_datos$daily_screen_hours >= q[2]]
+c(sueno_q1 = round(mean(bajo), 2), sueno_q3 = round(mean(alto), 2),
+  dif_horas = round(mean(bajo) - mean(alto), 2))
+g3
 ```
 
-Hacemos un boxplot comparativo con las variables numéricas estandarizadas. En este data set variables como `daily_notifications`, `minutes_to_first_check_after_waking`, `daily_screen_hours`. Son las que mas tienen datos desbalanceados hacia arriba.
+El gráfico muestra una nube inclinada hacia abajo. Entre el cuartil bajo y el cuartil alto hay una diferencia de 0.81 horas, casi una hora completa. 
 
+Quien más usa el celular tiende a dormir menos. Y una hora menos de sueño es clínicamente relevante ya que hace la diferencia entre un descanso adecuado y una deuda crónica.Se sabe que el uso de la pantalla ocupa tiempo en la cama que antes era de sueño y la luz azul junto con la estimulación retrasan la conciliación.
+
+### 5. `daily_screen_hours` vs `life_satisfaction_1to10`
 ```{r}
-par(mar = c(12, 4, 4, 2))
-boxplot(scale(num), las = 2, cex.axis = 0.7,
-        main = "Variables numéricas estandarizadas",
-        col = "grey90")
-par(mar = c(5, 4, 4, 2))
+g5 <- ggplot(completar_datos,
+       aes(x = factor(life_satisfaction_1to10), y = daily_screen_hours)) +
+  geom_boxplot(fill = "lightgreen", outlier.alpha = 0.15, outlier.size = 0.8) +
+  labs(title = "Horas de pantalla según satisfacción con la vida",
+       x = "Satisfacción con la vida (1-10)", y = "Horas diarias de pantalla") +
+  theme_minimal(base_size = 13)
+
+q <- quantile(completar_datos$daily_screen_hours, c(.25, .75))
+bajo <- completar_datos$life_satisfaction_1to10[completar_datos$daily_screen_hours <= q[1]]
+alto <- completar_datos$life_satisfaction_1to10[completar_datos$daily_screen_hours >= q[2]]
+c(sat_q1 = round(mean(bajo), 2), sat_q3 = round(mean(alto), 2),
+  dif_puntos = round(mean(bajo) - mean(alto), 2))
+g5
 ```
+Se puede ver como las medianas bajan a medida que sube la satisfacción: ≈7.6 h en satisfacción=1 y ≈2.4 h en satisfacción=10. El patrón es descendente pero con solapamiento.
+Esto quiere decir que quien se declara menos satisfecho con su vida pasa más tiempo en pantalla. Junto con el análisis a las horas de sueño lo más lógico es que el tiempo en pantalla desplaza actividades que sí construyen satisfacción (relaciones presenciales, descanso, actividad física). No es que la pantalla cause insatisfacción directamente; es que ocupa el lugar de lo que sí la produce.
+
+### 6. `daily_screen_hours` vs `low_mood_score_0to27`
+```{r}
+g6 <- ggplot(completar_datos,
+       aes(x = factor(low_mood_score_0to27), y = daily_screen_hours)) +
+  geom_boxplot(fill = "lightyellow", outlier.alpha = 0.15, outlier.size = 0.8) +
+  labs(title = "Horas de pantalla según puntaje de ánimo bajo",
+       x = "Ánimo bajo (0-27)", y = "Horas diarias de pantalla") +
+  theme_minimal(base_size = 13) +
+  theme(axis.text.x = element_text(size = 8))
+
+c(pearson  = round(cor(completar_datos$daily_screen_hours,
+                       completar_datos$low_mood_score_0to27), 3),
+  spearman = round(cor(completar_datos$daily_screen_hours,
+                       completar_datos$low_mood_score_0to27,
+                       method = "spearman"), 3))
+
+q <- quantile(completar_datos$daily_screen_hours, c(.25, .75))
+bajo <- completar_datos$low_mood_score_0to27[completar_datos$daily_screen_hours <= q[1]]
+alto <- completar_datos$low_mood_score_0to27[completar_datos$daily_screen_hours >= q[2]]
+c(mood_q1 = round(mean(bajo), 2), mood_q3 = round(mean(alto), 2),
+  dif_puntos = round(mean(alto) - mean(bajo), 2))
+
+g6
+```
+Este es un caso particular, las medianas de horas de pantalla bajan con el puntaje de ánimo bajo: ≈4 h en puntaje 0, ≈1.5 h en puntaje 19. El n se concentra en los puntajes bajos (0-5); los puntajes altos tienen pocos casos. Eso explica la correlación negativa.
+
+Este patrón nos muestra algo diferente a los análisis hasta ahora, puesto que a mayor malestar casi siempre conduce a mayor cantidad de horas frente a la pantalla. Sin embargo, en la gráfica podemos ver que quien reporta más síntomas de ánimo bajo usa menos el celular, no más.
+
+La interpretación más adecuada es que la ansiedad y la depresión actúan de forma contraria sobre el uso del celular: la ansiedad pega a la persona a la pantalla mientras que la depresión le quita el interés, incluso por las redes.
+
+### 7. `social_comparison_1to10` vs `daily_screen_hours`
+
+### 8. `loneliness_1to10` vs `daily_screen_hours`
+
+### 9. `anxiety_score_0to27` vs `daily_notifications`
+
+
+<!-- ```{r} -->
+
+<!-- boxplot(avg_sleep_hours ~ self_esteem_1to10, data = completar_datos, -->
+
+<!--         main = "Autoestima según las horas de sueño", -->
+
+<!--         xlab = "Autoestima", ylab = "promedio de horas de sueño", -->
+
+<!--         col = "lightyellow") -->
+
+<!-- ``` -->
+
+<!-- No podemos hacer un boxplot de todas las variables a la vez, puesto que nuestro dataset contiene más que solo variables numéricas -->
+
+<!-- ```{r} -->
+
+<!-- plot(completar_datos$daily_screen_hours, completar_datos$age, -->
+
+<!--      pch = 16, col = rgb(0, 0, 0, 0.15), -->
+
+<!--      xlab = "Horas diarias en pantalla", ylab = "edad", -->
+
+<!--      main = "Correlación entre la edad y el tiempo diario de pantalla") -->
+
+<!-- ``` -->
+
+<!-- Mediante el grafico de densidad de Kernel,analizamos 3 variables con un h diferente que se calcula con `bw.nrd0()` y ajusta el suavisado a la dispersion de cada variable. `daily_screen_hours` se ve que tiene una distribucion asimetrica positiva dejando en claro que la mayoria de personas ve el celular entre 2-3 horas y una minoria de gente tiene un uso muy alto. La variable `avg_sleep_hours` se ve que tiene un distribucion mas simetrica con un h de 0.134 porque tiene una dispersion baja. La variable `anxiety_score_0to27` tiene una despersion mas alta, por eso el h, ademas de mostrar una asimetria positiva. -->
+
+<!-- ```{r} -->
+
+<!-- par(mfrow = c(1, 3)) -->
+
+<!-- for (v in c("daily_screen_hours", "avg_sleep_hours", "anxiety_score_0to27")) { -->
+
+<!--   x <- completar_datos[[v]] -->
+
+<!--   h <- bw.nrd0(x) -->
+
+<!--   plot(density(x, bw = h), lwd = 2, -->
+
+<!--        main = paste0(v, "\n(h = ", round(h, 3), ")"), xlab = v) -->
+
+<!--   rug(x) -->
+
+<!-- } -->
+
+<!-- par(mfrow = c(1, 1)) -->
+
+<!-- ``` -->
+
+<!-- Ahora usamos otro grafico de densidad de Kernel pero superponiendo 3 curvas, una por grupo de `wellbeing_band`. Cada grupo tiene un tiempo de pantalla muy distinto, Good se concentra bajo, Moderate en el medio y At-risk esta mucho mas ancha. -->
+
+<!-- ```{r} -->
+
+<!-- bandas <- unique(completar_datos$wellbeing_band) -->
+
+<!-- h <- bw.nrd0(completar_datos$daily_screen_hours) -->
+
+<!-- plot(density(completar_datos$daily_screen_hours, bw = h), type = "n", -->
+
+<!--      main = paste0("Horas de pantalla por banda de bienestar (h = ", round(h, 3), ")"), -->
+
+<!--      xlab = "horas diarias") -->
+
+<!-- for (i in seq_along(bandas)) { -->
+
+<!--   sub <- completar_datos$daily_screen_hours[completar_datos$wellbeing_band == bandas[i]] -->
+
+<!--   lines(density(sub, bw = h), col = i, lwd = 2) -->
+
+<!-- } -->
+
+<!-- legend("topright", legend = bandas, col = seq_along(bandas), lwd = 2, bty = "n") -->
+
+<!-- ``` -->
+
+<!-- En este diagrama de dispersión, donde analizamos si las horas de pantalla determinan la ansiedad de una persona. Se ve una nube ancha con una correlacion positiva pero que no explica nada al simplificar una relacion con bastante ruido. -->
+
+<!-- ```{r} -->
+
+<!-- plot(completar_datos$daily_screen_hours, completar_datos$anxiety_score_0to27, -->
+
+<!--      pch = 19, col = rgb(0, 0, 0, 0.35), -->
+
+<!--      xlab = "horas diarias de pantalla", ylab = "puntaje de ansiedad (0-27)", -->
+
+<!--      main = "¿La correlación describe bien lo que pasa?") -->
+
+<!-- abline(lm(anxiety_score_0to27 ~ daily_screen_hours, data = completar_datos), -->
+
+<!--        col = "firebrick", lwd = 2) -->
+
+<!-- cor(completar_datos$daily_screen_hours, completar_datos$anxiety_score_0to27) -->
+
+<!-- ``` -->
+
+<!-- Hacemos un boxplot comparativo con las variables numéricas estandarizadas. En este data set variables como `daily_notifications`, `minutes_to_first_check_after_waking`, `daily_screen_hours`. Son las que mas tienen datos desbalanceados hacia arriba. -->
+
+<!-- ```{r} -->
+
+<!-- par(mar = c(12, 4, 4, 2)) -->
+
+<!-- boxplot(scale(num), las = 2, cex.axis = 0.7, -->
+
+<!--         main = "Variables numéricas estandarizadas", -->
+
+<!--         col = "grey90") -->
+
+<!-- par(mar = c(5, 4, 4, 2)) -->
+
+<!-- ``` -->
+
+<!--# <!--# <!--# <!--# <!--# <!--#  -->
