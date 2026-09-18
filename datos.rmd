@@ -869,6 +869,7 @@ c(fomo_q1 = round(mean(bajo), 2), fomo_q3 = round(mean(alto), 2),
   dif_puntos = round(mean(alto) - mean(bajo), 2))
 g4
 ```
+
 > **Describir:** el FOMO solo toma diez valores enteros, así que en lugar de una nube conviene graficar las cajas de cada nivel. Las medianas de horas de pantalla suben de forma escalonada con el nivel de FOMO. Entre el cuartil bajo y el alto hay 2,26 puntos de diferencia.
 >
 > **Analizar:** el patrón es **monótono**: sube con cada nivel, sin saltos ni retrocesos, y las cajas de los extremos apenas se tocan. Con diez niveles, una escalera así no se produce por casualidad. Eso es lo que hace creíble la tendencia.
@@ -914,6 +915,7 @@ c(sat_q1 = round(mean(bajo), 2), sat_q3 = round(mean(alto), 2),
   dif_puntos = round(mean(bajo) - mean(alto), 2))
 g5
 ```
+
 > **Describir:** las medianas de horas de pantalla bajan a medida que sube la satisfacción: ≈7,6 h en satisfacción 1 y ≈2,4 h en satisfacción 10. El patrón es descendente, pero con bastante solapamiento entre las cajas. Correlación −0,36.
 >
 > **Analizar:** la tendencia existe y va siempre en la misma dirección, pero **el solapamiento importa**: no podemos decir que el nivel de satisfacción permita adivinar cuántas horas usa alguien. Y sobre el mecanismo, la lectura más razonable (aunque no la única) es que el tiempo de pantalla **desplaza actividades que sí construyen satisfacción**: relaciones cara a cara, descanso, actividad física. No es que la pantalla cause insatisfacción directamente; es que ocupa el lugar de lo que sí la produce.
@@ -944,6 +946,7 @@ c(mood_q1 = round(mean(bajo), 2), mood_q3 = round(mean(alto), 2),
 
 g6
 ```
+
 > **Describir:** el `n` se concentra en los puntajes bajos (0 a 5) y los puntajes altos tienen pocos casos. Las medianas de horas de pantalla **bajan** con el ánimo bajo: ≈4 h en puntaje 0, ≈1,5 h en puntaje 19. Correlación −0,36.
 >
 > **Analizar:** aquí está la anomalía más interesante del proyecto. Este patrón va **al revés** de todo lo anterior: en ansiedad y FOMO, más malestar venía con más pantalla; aquí, quien reporta **más** síntomas de ánimo bajo usa **menos** el celular.
@@ -974,6 +977,7 @@ c(pearson  = round(cor(completar_datos$daily_screen_hours,
                        method = "spearman"), 3))
 g7
 ```
+
 > **Describir:** las medianas de comparación social suben de forma escalonada con las horas de pantalla. Quienes están en el cuartil de menor uso (≤1,8 h) promedian 4,57; quienes están en el de mayor uso (≥4,3 h), 6,35. Diferencia: +1,78 sobre 10.
 >
 > **Analizar:** el patrón no da saltos: sube de a poco, y eso la gráfica lo muestra como cajas que se van desplazando. La lectura que mejor encaja es que pasar más tiempo en redes expone de forma constante a la vida idealizada que otros publican. No es un golpe único, es un **desgaste acumulado**: entre más contenido ajeno se consume, más se mide el propio valor en función de los demás.
@@ -1002,6 +1006,7 @@ c(pearson  = round(cor(completar_datos$daily_screen_hours,
                        method = "spearman"), 3))
 g8
 ```
+
 > **Describir:** las cajas se desplazan hacia arriba a medida que se acumulan horas de uso. El grupo con menor tiempo de pantalla promedia 3,89 en la escala de soledad; el de mayor exposición alcanza 5,67. Aumento: +1,78 sobre 10.
 >
 > **Analizar:** el patrón es ascendente y claro, del mismo tamaño que el de comparación social.
@@ -1033,6 +1038,7 @@ c(pearson  = round(cor(completar_datos$daily_notifications,
                        method = "spearman"), 3))
 g9
 ```
+
 > **Describir:** a diferencia de los pares anteriores, aquí no se comparan horas de uso sino alertas. La nube es positiva y continua. Quienes reciben pocas notificaciones (≤20) promedian 9,44 puntos de ansiedad; quienes reciben muchas (≥83), 13,57. Salto: +4,13 sobre 27.
 >
 > **Analizar:** este es **el único par destacado que no involucra las horas de pantalla**, y por eso es el más informativo de los nueve. Revela algo que los otros no podían mostrar: **el problema no es solo cuánto tiempo se usa el celular, sino cuántas veces interrumpe**.
