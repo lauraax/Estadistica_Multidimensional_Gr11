@@ -1,7 +1,6 @@
 ---
 title: "Estadística Multidimensional — Proyecto"
-subtitle: "Tiempo en pantalla, redes sociales y su asociación con la salud mental"
-link: "https://www.kaggle.com/datasets/uditjain13/social-media-screen-time-and-mental-health-2026"
+subtitle: "Tiempo en pantalla, redes sociales y su asociación con la salud mental <br>[Link del Dataset en Kaggle](https://www.kaggle.com/datasets/uditjain13/social-media-screen-time-and-mental-health-2026)"
 author: 
   - "Johan Camilo Gómez Blanco - 20222020069" 
   - "Laura Nathaly Páez Cifuentes - 20232020055" 
@@ -140,13 +139,15 @@ dim(datos); str(datos)
 
 ## Identificación de anomalías, NA's y duplicados
 
-Anteriormente, al usar la función `table()` nos anticipó la existencia de `NA's` en el dataset (especificamente 70 en la variable `gender`). A continuación identificaremos y trataremos estas anomalías.
+Antes de analizar nada hay que responder una pregunta incómoda: **¿los datos están bien?** Un solo valor mal escrito puede cambiar una conclusión, y la función `table()` ya nos había anticipado que había algo raro en `gender`.
 
 ```{r}
 summary(datos)
 ```
 
-`summary()` nos permite ver si existen `NA's` en todas las variables. En este caso logramos identificar 70 `NA's` en `gender` (no es sorpresa) y otros 105 en `avg_sleep_hours` para un total de 175 `NA's` en el dataset.
+> **Describir:** aparecen 70 `NA` en `gender` y 105 en `avg_sleep_hours`. Sumando, 175 celdas vacías.
+>
+> **Analizar:** son **dos variables** las afectadas, no una. Y conviene fijarse en el orden de magnitud: sobre 7000 registros, eso es entre el 1% y el 1,5%. **Decisión:** se tratan, porque aunque son pocas están en variables que vamos a usar.
 
 También podemos mirarlos de la siguiente manera:
 
@@ -154,13 +155,17 @@ También podemos mirarlos de la siguiente manera:
 colSums(is.na(datos))
 ```
 
-O podemos ver los **NA's** existentes por fila en el dataset:
+Y ahora los contamos por fila, que es lo que importa cuando hay que decidir:
 
 ```{r}
 sum(!complete.cases(datos))
 ```
 
-Sin embargo, vemos que nos arroja 173 y no 175. \> **¿Por qué sucede?** La diferencia se debe a que colSums(is.na()) cuenta celdas (cada variable por separado) mientras que complete.cases() cuenta filas. Esto puede significar que dos participantes tienen NA simultáneamente en `gender` y en `avg_sleep_hours`, de modo que sus filas se cuentan una sola vez.
+> **Describir:** aquí salen 173, no 175.
+>
+> **Analizar:** la diferencia son **dos filas**, y la explicación es sencilla una vez se ve: `colSums(is.na())` cuenta **celdas** (cada variable por separado) mientras que `complete.cases()` cuenta **filas**. Dos participantes tienen `NA` en las dos variables a la vez, así que sus celdas se cuentan dos veces pero su fila una sola.
+>
+> **Para el informe:** es una distinción que conviene tener clara, porque de aquí en adelante vamos a hablar siempre de **filas** (las que perdemos) y no de celdas.
 
 Podemos averiguarlo con un gráfico.
 
@@ -176,20 +181,24 @@ axis(1, at = seq(0, 1, length.out = ncol(p)), labels = colnames(p),
      las = 1, cex.axis = 1.0, tick = FALSE, line = -0.6)
 ```
 
-Efectivamente, modelando los `NA's` existentes de todas las variables en un gráfico, encontramos una coincidencia en ambas variables, lo que confirma que hay dos filas que contiene `NA's` tanto en `gender` como en `avg_sleep_hours`.
+> **Describir:** el mapa de faltantes muestra las 173 filas incompletas y, en efecto, **dos filas tienen rojo en las dos columnas**.
+>
+> **Analizar:** queda confirmado que la diferencia entre 175 y 173 son esos dos participantes. No es un error de conteo: son dos personas a las que les falta el género **y** el sueño. **Decisión:** ninguna acción sobre ellas todavía; primero hay que decidir qué hacer con los faltantes en general.
 
-Antes de decidir que hacer con estos `NA´s`, debemos mirar si en el dataset existen filas repetidas:
+Antes de decidir qué hacer con esos faltantes, una comprobación que no cuesta nada: ¿hay filas repetidas?
 
 ```{r}
 sum(duplicated(datos))
 datos$participant_id[duplicated(datos$participant_id)]
 ```
 
-Como no se encuentran fillas duplicadas, continuamos con nuestro análisis respecto a los `NA's`
+> **Describir:** cero filas duplicadas y cero identificadores repetidos.
+>
+> **Analizar:** cada fila es un participante distinto, así que no hay nada que deduplicar. **Decisión:** se sigue adelante.
 
-## Tratamiento de NA´s
+## Tratamiento de los faltantes
 
-Sabemos que `avg_sleep_hours` tiene `NA's`, necesitamos saber que hacer con esta columna y estos datos
+Ya sabemos dónde están. Ahora, cuánto pesan:
 
 ```{r}
 round(mean(is.na(datos$avg_sleep_hours)) * 100, 2)
@@ -197,7 +206,9 @@ round(mean(is.na(datos$gender)) * 100, 2)
 round(mean(!complete.cases(datos)) * 100, 1)
 ```
 
-`avg_sleep_hours` con 105 casos (1.5%) y `gender` con 70 casos (1.0%). En total, 173 filas (2.5%) tienen al menos un `NA`.
+> **Describir:** `avg_sleep_hours` pierde el 1,5% de sus celdas y `gender` el 1,0%. En total, el 2,5% de las filas tiene al menos un `NA`.
+>
+> **Analizar:** son porcentajes pequeños, y eso es buena noticia, pero **no basta para decidir**. La pregunta no es cuánto falta, sino **por qué falta**: si quienes no respondieron son un grupo distinto del resto, borrarlos sesga el resultado aunque sean pocos.
 
 **¿Qué podemos hacer con estos datos?** Recordemos la tabla vista en clase:
 
@@ -207,21 +218,24 @@ round(mean(!complete.cases(datos)) * 100, 1)
 | **Por pares** | Usa lo que haya en cada par | La matriz de correlación puede dejar de ser definida positiva → **PCA imposible** |
 | **Imputar por la media** | Rellena con el promedio | **Reduce artificialmente la varianza** y aplana las correlaciones |
 
-Investigando, encontramos que existen "criterios" que identifican el por qué una celda puede estar vacía:
+Investiga, y encontrarás que hay tres "criterios" que explican por qué una celda puede estar vacía:
 
-**MCAR (Missing Completely At Random):** "faltante completamente al azar" El dato falta por una razón que no tiene nada que ver con nada.
+**MCAR (Missing Completely At Random):** "faltante completamente al azar". El dato falta por una razón que no tiene nada que ver con nada.
 
-**MAR (Missing At Random):** "faltante al azar" El dato falta por algo relacionado con otras variables que se observaron.
+**MAR (Missing At Random):** "faltante al azar". El dato falta por algo relacionado con otras variables que sí se observaron.
 
-**MNAR (Missing Not At Random):** "faltante no al azar" El dato falta por el valor mismo que falta. por ejemplo: los que duermen muy poquitas horas son justo los que no quieren reportarlo. Este es el peor caso, y no hay forma limpia de arreglarlo.
+**MNAR (Missing Not At Random):** "faltante no al azar". El dato falta por el valor mismo que falta. Por ejemplo: los que duermen muy poquitas horas son justo los que no quieren reportarlo. Este es el peor caso, y no hay forma limpia de arreglarlo.
 
-**¿Por qué importa la diferencia?** Porque borrar filas solo es correcto bajo MCAR. Si borras bajo MAR o MNAR, el resultado queda sesgado. Ese es todo el motivo de la prueba que estamos discutiendo.
+**¿Y por qué importa la diferencia?** Porque **borrar filas solo es correcto bajo MCAR**. Si borras bajo MAR o MNAR, el resultado queda sesgado. Ese es todo el motivo de la prueba que viene.
 
-> **¿Entonces que haremos?** Para `gender` es más sencillo que para `avg_sleep_hours`. como en gender existe un valor denominado "prefer not to say", los `NA´s` en esta variable pasarán a tomar el valor de "prefer not to say".
+> **Analizar:** las dos variables no se tratan igual, y la razón es distinta en cada caso.
 >
-> Para `avg_sleep_hours` debemos identificar que tipo de datos faltantes tenemos (MCAR - MAR - MNAR). La prueba solo puede descartar MCAR (o no descartarlo). Distinguir MAR de MNAR es imposible en principio: ambos pueden generar exactamente los mismos datos observados.
+> - **`gender` se resuelve sin estadística.** El cuestionario ya ofrece la opción `"Prefer not to say"`, así que un `NA` equivale funcionalmente a una negativa a responder. **Decisión:** se rellena con esa categoría, que además conserva las otras 24 mediciones de esos 70 participantes.
+> - **`avg_sleep_hours` sí exige una prueba.** Aquí no hay una categoría natural que absorba los faltantes, así que hay que determinar si la ausencia es aleatoria antes de borrar nada. **Decisión:** se somete a una prueba formal.
+>
+> Y una precisión que importa para lo que sigue: **la prueba solo puede descartar MCAR, o no descartarlo.** Distinguir MAR de MNAR es imposible en principio, porque ambos pueden generar exactamente los mismos datos observados.
 
-Entonces, procedemos a imputar los `NA´s` en `gender`:
+Empezamos por el caso fácil, `gender`:
 
 ```{r}
 gender_imputado <- is.na(datos$gender)
@@ -230,11 +244,9 @@ table(datos$gender, useNA = "ifany")
 colSums(is.na(datos))
 ```
 
-Luego, miramos que debemos aplicar para los `NA´s` de `avg_sleep_hours`
+## La prueba para `avg_sleep_hours`
 
-## ¿Qué hacer con los NA´s?
-
-Aplicaremos una prueba conjunta, que combina una regresión logística y una prueba de razón de verosimilitud.
+Para `avg_sleep_hours` aplicamos una **prueba conjunta**, que combina una regresión logística con una prueba de razón de verosimilitud. Antes de verla, qué es cada pieza:
 
 **¿Qué es cada cosa y qué se hará?**
 
@@ -251,7 +263,7 @@ Aplicaremos una prueba conjunta, que combina una regresión logística y una pru
 >
 > La comparación se mide con **chi-cuadrado (χ²):** un número que resume cuánto mejoró. Más grande significa que mejoró más. Luego se convierte en un p-valor.
 >
-> **El p-valor**: Nos indica a probabilidad de observar un dato con una diferencia significativa (como en la variable `daily_notifications` por ejemplo). su criterio es $p < 0.05$. Si $p$ cumple este criterio, lo que vemos no es meramente azar.
+> **El p-valor:** responde una sola pregunta (si de verdad no hubiera ninguna diferencia, ¿qué tan probable sería ver una como la observada, solo por casualidad?). El criterio convencional es $p < 0.05$. Ojo con una cosa: **el p-valor no mide el tamaño del efecto**, así que un p-valor pequeño no significa que la diferencia sea importante.
 
 Definimos quienes tienen el dato faltante (105 de 7000):
 
@@ -260,9 +272,7 @@ na_s <- is.na(datos$avg_sleep_hours)
 sum(na_s)
 ```
 
-A partir de aquí, todo el trabajo consiste en comparar esos 105 contra los otros 6895, para ver si son un grupo distinto o un grupo cualquiera.
-
-Tomamos las 13 variables numéricas (excluyendo avg_sleep_hours) y calculamos el promedio de cada una en los dos grupos: los 105 con sueño faltante y los 6895 con sueño registrado.
+La idea es simple: **si la ausencia es aleatoria, esos 105 no deberían parecerse a nada en particular.** Comparémoslos entonces contra los otros 6895 en las trece variables numéricas.
 
 ```{r}
 vars_num <- setdiff(names(datos)[sapply(datos, is.numeric)], "avg_sleep_hours")
@@ -270,11 +280,11 @@ round(sapply(vars_num, function(v)
   c(con_NA = mean(datos[[v]][na_s]), sin_NA = mean(datos[[v]][!na_s]))), 2)
 ```
 
-Notamos que los dos grupos son muy parecidos en casi todo; la diferencia más visible está en `daily_notifications` (48.9 frente a 61.7). Veremos si esa diferencia es real o casualidad.
+> **Describir:** los dos grupos son casi idénticos en las trece variables. La diferencia más visible está en `daily_notifications`: 48,9 frente a 61,7, unas trece notificaciones menos.
+>
+> **Analizar:** trece comparaciones y doce salen planas. La de notificaciones es la única que llama la atención, y con trece pruebas simultáneas **alguna diferencia tiene que aparecer por puro azar**. **Decisión:** no decidir nada con esto; contrastarlo con una prueba que use las trece variables a la vez, para saber si esa diferencia aislada es real o es ruido.
 
-A continuación ejecutaremos una prueba conjunta de MCAR, que combina una regresión logística con una prueba de razón de verosimilitud. Es importante tener en cuenta que esta prueba solo puede descartar MCAR (o no descartarlo): distinguir MAR de MNAR es imposible en principio, porque ambos pueden generar exactamente los mismos datos observados.
-
-Donde:
+Esa prueba conjunta compara dos modelos:
 
 - `m0` es el modelo nulo: predice la ausencia usando nada, solo la tasa general de 1.5% para todos
 - `m1` es el modelo completo: intenta predecir la ausencia usando las 13 variables. Aquí el resultado es "¿está vacía la celda de sueño?" (sí/no) para cada uno de los 7000 participantes.
@@ -286,11 +296,13 @@ m1 <- glm(na_s ~ ., data = datos[vars_num], family = binomial)
 anova(m0, m1, test = "LRT")
 ```
 
-Si bien observamos una mejora (Deviance = 15.35) no es una mejora verdaderamente significativa. La mejora esperada por puro azar sería aproximadamente 13 (una por cada variable añadida). La mejora real fue 15.35; casi nada, en realidad. Es decir, las variables casi no aportan.
-
-El p-valor (0.286) es grande, mucho mayor que 0.05. Eso explica que dicha mejora (Deviance) pudo ocurrir por mera casualidad.
-
-Con esto no encontramos evidencia de que la ausencia dependa de las 13 variables, lo que es compatible con MCAR. Conviene ser prudente: con 105 faltantes y 13 predictores la prueba tiene potencia limitada, así que no rechazar no equivale a demostrar.
+> **Describir:** la mejora es de 15,35 con 13 grados de libertad. El p-valor es 0,286.
+>
+> **Analizar:** lo primero que hay que mirar aquí no es el p-valor, sino **contra qué se compara esa mejora**. Si las trece variables no sirvieran para nada, por puro azar esperaríamos una mejora de aproximadamente 13 (una por cada variable añadida). La nuestra fue 15,35: apenas dos puntos más. Y el p-valor lo confirma: 0,286 significa que **una mejora así ocurriría el 29% de las veces aunque las variables no aportaran nada**.
+>
+> **Decisión:** se trata la ausencia como aleatoria y se aplica `listwise`, borrando las 105 filas.
+>
+> Y una cautela que conviene dejar escrita: **con 105 faltantes y 13 predictores, la prueba tiene potencia limitada**. No rechazar MCAR no es lo mismo que demostrarlo. Lo que sí podemos afirmar es que **no encontramos evidencia de que la ausencia sea sistemática**, y eso es suficiente para seguir.
 
 > Así pues, podemos decir que la elección más acertada para tratar estos datos faltantes, es el uso de `listwise()` (Eliminar las 105 filas).
 
@@ -342,46 +354,6 @@ descriptivos
 
 `num` reúne 14 variables, pero no todas son continuas en sentido estricto: `platforms_used_count` (1–8), `physical_activity_days_per_week (0–7)` y las siete escalas de 1 a 10 son ordinales o recuentos. Las tratamos como numéricas por conveniencia asumiendo que los intervalos entre categorías son comparables.
 
-<!-- A continuación, determinamos el número óptimo para la distribución del histograma que haremos -->
-
-<!-- ```{r} -->
-
-<!-- ceiling(log2(nrow(completar_datos))) + 1 -->
-
-<!-- ``` -->
-
-<!-- El óptimo es 14 clases, aunque como vemos en los gráficos, parece mucho mejor el histograma con 20 clases -->
-
-<!-- ```{r} -->
-
-<!-- par(mfrow = c(1, 3)) -->
-
-<!-- hist(completar_datos$daily_screen_hours, breaks = 5,  main = "5 clases",  xlab = "Horas al día en pantalla", ylab = "Frecuencia", col = "darkblue", border = "white") -->
-
-<!-- hist(completar_datos$daily_screen_hours, breaks = 14, main = "14 clases", xlab = "Horas al día en pantalla", ylab = "Frecuencia", col = "darkblue", border = "white") -->
-
-<!-- hist(completar_datos$daily_screen_hours, breaks = 20, main = "20 clases", xlab = "Horas al día en pantalla", ylab = "Frecuencia", col = "darkblue", border = "white") -->
-
-<!-- ``` -->
-
-<!-- ## Estandarización de las variables numéricas -->
-
-<!-- Como nuestras variables viven en escalas muy distintas (notificaciones de 5 a 400, autoestima de 1 a 10), calculamos también su versión estandarizada con `scale()`. Esto le resta la media y divide por la desviación estándar a cada columna, dejándolas todas con media 0 y desviación 1. **No la usamos para el análisis univariado que sigue** (estandarizar es una transformación lineal: no cambia la forma de la distribución, solo el eje x), sino más adelante, cuando necesitemos comparar varias variables en un mismo gráfico o calcular distancias de Mahalanobis, donde sí importa que estén en la misma escala. -->
-
-<!-- ```{r} -->
-
-<!-- num_scaled <- as.data.frame(scale(num)) -->
-
-<!-- round(colMeans(num_scaled), 4) -->
-
-<!-- round(apply(num_scaled, 2, sd), 4) -->
-
-<!-- ``` -->
-
-<!-- Miramos la distribución de cada variable por separado, en su escala original (`num`), para que las conclusiones se puedan leer directamente en las unidades de cada una (horas, puntaje 1-10, etc.). -->
-
-<!-- Cada variable se presenta con **dos vistas complementarias**: un histograma, que muestra la forma de la distribución, y un boxplot, que resume su centro, su dispersión y —sobre todo— sus valores atípicos. La segunda vista no es redundante: **nueve de las catorce variables tienen casos atípicos que el histograma no distingue** de una simple cola. Ambas comparten la misma escala horizontal, de modo que los atípicos quedan alineados bajo la cola que los origina. -->
-
 ## Distribuciones de cada variable numérica
 
 ### Edad (`age`)
@@ -395,9 +367,11 @@ boxplot(num$age, horizontal = FALSE, main = "Edad", xlab = "años",
 par(op)
 ```
 
-> **Qué implica.** Es una de las variables más neutras del conjunto. Su distribución es casi simétrica (0.27), la media y la mediana coinciden (29.23 frente a 29), y los 17 casos que el boxplot marca como atípicos no son anomalías: son simplemente los participantes mayores, que en una muestra de 13 a 71 años caen fuera del rango intercuartílico por pura aritmética.
+> **Describir:** la distribución es casi simétrica (0,27), y la media y la mediana coinciden: 29,23 frente a 29. El boxplot marca 17 casos atípicos, todos hacia arriba.
 >
-> **Para el análisis.** Aquí la media sí representa al participante típico, así que puede usarse sin reservas. Y hay un dato que conviene retener: **la edad no se relaciona con el tiempo de pantalla** (r = 0.01). Eso descarta de entrada una de las explicaciones más intuitivas del uso intensivo —que sea cosa de los más jóvenes— antes de llegar al análisis multivariante.
+> **Analizar:** esos 17 no son un problema, son simplemente los participantes mayores. En una muestra de 13 a 71 años, quien tiene 60 queda fuera del rango intercuartílico por pura aritmética, no porque su dato sea raro. Aquí la media sí representa al participante típico, así que se puede usar sin miedo.
+>
+> Conviene retener un dato desde ya: **la edad no se relaciona con el tiempo de pantalla** (r = 0,01). Eso descarta de entrada una de las explicaciones más intuitivas del uso intensivo (que sea cosa de los jóvenes) antes de que lleguemos al análisis multivariado.
 
 ### Plataformas usadas (`platforms_used_count`)
 
@@ -411,11 +385,11 @@ boxplot(num$platforms_used_count, horizontal = FALSE, main = "Plataformas usadas
 par(op)
 ```
 
-> **Qué implica.** Es un **recuento**, no una medición continua: solo puede tomar ocho valores, de 1 a 8. Por eso la media (3.49) describe cuántas plataformas se usan en promedio, pero no tiene sentido como valor individual —nadie usa 3.49 plataformas—, y su distribución se ve escalonada en lugar de curva.
+> **Describir:** la distribución se ve escalonada en lugar de curva, con la mayoría entre 2 y 5 plataformas. La media es 3,49; la mediana, 3. El boxplot no marca ningún atípico.
 >
-> **Para el análisis.** El boxplot no marca ningún atípico, y no porque la variable sea homogénea: al estar acotada entre 1 y 8, el rango intercuartílico es tan ancho en proporción que ningún valor queda fuera. Es el primer caso donde la lógica del boxplot deja de aportar.
+> **Analizar:** se ve escalonada porque **es un recuento, no una medición continua**: solo puede valer 1, 2, 3… hasta 8. Por eso la media de 3,49 describe al grupo pero no a nadie en particular (no existe alguien que use tres plataformas y media). Y el boxplot no marca atípicos no porque la variable sea homogénea, sino porque al estar acotada entre 1 y 8 su rango intercuartílico es tan ancho en proporción que ningún valor alcanza a quedar fuera. **Decisión:** tratarla como numérica en los cálculos, pero leerla siempre en valores enteros.
 >
-> Como el número de plataformas **no se asocia con el tiempo de pantalla** (r = −0.01), la cantidad de redes que alguien usa no dice nada sobre cuánto tiempo pasa en ellas.
+> Otro dato para más adelante: el número de plataformas **no se asocia con el tiempo de pantalla** (r = −0,01). Cuántas redes usa alguien no dice nada sobre cuánto tiempo pasa en ellas.
 
 ### Horas diarias de pantalla (`daily_screen_hours`)
 
@@ -428,11 +402,12 @@ boxplot(num$daily_screen_hours, horizontal = FALSE, main = "Horas diarias de pan
 par(op)
 ```
 
-> **Qué implica.** Es la variable objetivo del proyecto, y también una de las que más va a condicionar el análisis. Su asimetría (1.06) y sus 170 casos atípicos describen un patrón claro: la mayoría se concentra entre 1 y 4 horas, y por encima hay una cola de usuarios intensivos que llega hasta las 14 horas diarias.
+> **Describir:** el grueso de la muestra se concentra entre 1 y 4 horas, con una cola hacia la derecha que llega hasta las 14. La mediana es 3; la media, 3,31. El boxplot marca 170 casos atípicos.
 >
-> **El promedio se queda corto.** La media (3.31) está en el percentil 58: **casi la mitad de la muestra (42%) usa más pantalla que el "promedio"**. Reportar 3.31 horas como cifra representativa describiría a una minoría. La mediana, 3 horas, es más honesta.
+> **Analizar:** esta es nuestra variable objetivo, y va a condicionar todo lo que venga después. Dos cosas:
 >
-> **Para el análisis.** Todo lo que mida relación entre esta variable y cualquier otra va a heredar su asimetría. Y como es el eje de casi todas las asociaciones del proyecto, su cola pesada se propaga a toda la matriz de correlaciones.
+> - **El promedio se queda corto.** La media está en el percentil 58, así que **casi la mitad de la muestra (42%) usa más pantalla que el "promedio"**. Reportar 3,31 horas como cifra representativa describiría a una minoría. **Decisión:** reportar siempre la mediana (3 horas) junto a la media.
+> - **Su asimetría se contagia.** Como esta variable es el eje de casi todas las asociaciones del proyecto, su cola pesada se va a propagar a toda la matriz de correlaciones y, más adelante, a los métodos que usen distancias. **Para el informe:** tenerlo presente cuando empiecen a aparecer casos que parezcan raros.
 
 ### Notificaciones diarias (`daily_notifications`)
 
@@ -446,13 +421,13 @@ boxplot(num$daily_notifications, horizontal = FALSE, main = "Notificaciones diar
 par(op)
 ```
 
-> **Qué implica.** A diferencia de las escalas psicológicas, `daily_notifications` no describe una población de hábitos moderados sino **dos poblaciones dentro de la misma muestra**: la gran mayoría se mueve en una franja discreta, y una minoría opera en un orden de magnitud completamente distinto. La asimetría (2.07) y los 339 casos que el boxplot marca como atípicos son la medida de esa convivencia, y es lo que vuelve a esta variable incómoda para casi cualquier método estadístico.
+> **Describir:** el pico está cerca de 25 notificaciones y de ahí todo cae hacia la derecha hasta 400. La mediana es 46; la media, 61,7. El boxplot marca **339 casos atípicos**, todos por arriba.
 >
-> **El promedio miente.** La media es 61.7 y está en el percentil 63: **más de un tercio de los participantes recibe más notificaciones que el "promedio"**. La mediana, 46, queda muy por debajo. Aquí la mediana no es un detalle de presentación: es la única medida de centro honesta.
+> **Analizar:** aquí no hay una población, hay **dos**. La mayoría de la gente vive entre 20 y 80 notificaciones al día, y un grupo pequeño se mueve en un orden de magnitud distinto. Esa convivencia es la que vuelve incómoda a esta variable: casi todas las herramientas que vienen de aquí en adelante suponen que los datos se parecen a una campana, y esto no lo es.
 >
-> **Es la variable que rompe la normalidad del conjunto.** Su cola es tan larga que arrastra a las demás: cuando en la fase multivariante aparezcan observaciones marcadas como atípicas por distancia de Mahalanobis, esta variable estará detrás de buena parte de esa señal.
->
-> **Sus atípicos no distorsionan el hallazgo central.** Aunque son 339, al quitarlos la correlación con horas de pantalla apenas baja de 0.606 a 0.563: la asociación se sostiene sin ellos. Es la comprobación de que no estamos ante un artefacto de unos pocos casos extremos.
+> - **El promedio no la representa.** La media está en el percentil 63, o sea que **más de un tercio de la muestra recibe más notificaciones que el "promedio"**. Cuando el promedio deja por debajo a un tercio de la gente, no está describiendo a nadie. **Decisión:** reportar la mediana junto a la media, nunca la media sola.
+> - **Sus atípicos no son errores.** Son usuarios reales con un uso intenso, no celdas mal escritas. Comprobamos además que **no cambian la conclusión del proyecto**: la correlación con las horas de pantalla es 0,61, y quitando los 339 casos baja apenas a 0,56. **Decisión:** se quedan.
+> - **Y nos va a dar trabajo después.** Cuando lleguemos a Mahalanobis y a componentes principales, buena parte de los casos que salgan como raros van a venir de aquí. **Para el informe:** mejor advertirlo ahora que explicarlo cuando ya aparezca.
 
 ### Minutos hasta revisar el celular al despertar (`minutes_to_first_check_after_waking`)
 
@@ -467,9 +442,11 @@ boxplot(num$minutes_to_first_check_after_waking, horizontal = FALSE,
 par(op)
 ```
 
-> **Qué implica.** Su asimetría (1.37) y sus 221 atípicos dibujan un comportamiento muy concentrado: la mayoría revisa el celular en los primeros veinte minutos del día, y una minoría se demora hasta casi dos horas. La media (20 minutos) está en el percentil 58, así que tampoco aquí representa al participante típico —la mediana son 17 minutos.
+> **Describir:** la mayoría revisa el celular en los primeros veinte minutos del día, con una cola que se estira hasta los 111. La mediana es 17; la media, 20. El boxplot marca 221 atípicos.
 >
-> **Para el análisis.** Lo llamativo no es su forma, sino su **independencia del tiempo de pantalla** (r = 0.01): revisar el celular apenas despierto no guarda relación con cuántas horas se usa después. Son dos comportamientos que la intuición agruparía y que los datos separan, algo que conviene tener presente al interpretar la estructura de correlaciones.
+> **Analizar:** como en notificaciones, la media vuelve a quedar por encima del valor típico (está en el percentil 58). Pero lo llamativo de esta variable no es su forma, sino lo que **no** se relaciona.
+>
+> **Su independencia del tiempo de pantalla es total** (r = 0,01). Revisar el celular apenas despierto no guarda ninguna relación con cuántas horas se usa después. Son dos comportamientos que la intuición agruparía como "uso problemático" y que los datos separan. **Para el informe:** cuando lleguemos a la estructura de correlaciones, esta va a quedar por fuera, y no es un error de cálculo.
 
 ### Horas de sueño promedio (`avg_sleep_hours`)
 
@@ -482,11 +459,11 @@ boxplot(num$avg_sleep_hours, horizontal = FALSE, main = "Horas de sueño promedi
 par(op)
 ```
 
-> **Qué implica.** Es una de las variables mejor comportadas del conjunto: simétrica (−0.05), con media y mediana coincidentes (6.96 frente a 7) y **la dispersión más baja de toda la matriz** (0.87 horas). La mayoría duerme entre 6.4 y 7.6 horas.
+> **Describir:** es la variable con la dispersión más baja de toda la matriz (0,87 horas) y prácticamente simétrica (−0,05). Media 6,96 y mediana 7: coinciden. La mayoría duerme entre 6,4 y 7,6 horas. El boxplot marca 48 atípicos.
 >
-> **Un matiz sobre sus atípicos.** Los 48 casos que el boxplot señala no son anomalías del fenómeno, sino consecuencia de esa dispersión tan baja: cuando casi todos los valores caen en una franja de poco más de una hora, quien duerme 5 o 9 horas queda automáticamente marcado. Es el caso inverso al de notificaciones: allí el boxplot descubre un problema real; aquí solo refleja la estrechez de la distribución.
+> **Analizar:** esos 48 atípicos hay que leerlos con cuidado, porque son el caso contrario al de notificaciones. Allí el boxplot descubría un problema real; aquí solo refleja que **la distribución es muy estrecha**: cuando casi todos los valores caen en una franja de poco más de una hora, quien duerme 5 o 9 queda marcado automáticamente. No hay nada que corregir.
 >
-> **Para el análisis.** Su asociación con el tiempo de pantalla (−0.38) es la más fuerte de todas las que van en dirección negativa: a más pantalla, menos sueño. Y como no hay anomalías genuinas, puede entrar sin transformaciones en los métodos que asuman normalidad.
+> **Decisión:** entra sin transformaciones en los métodos que asuman normalidad. Y guardamos su asociación con la pantalla, que es la más fuerte de todas las negativas: **a más pantalla, menos sueño** (−0,38).
 
 ### Ansiedad (`anxiety_score_0to27`)
 
@@ -500,9 +477,11 @@ boxplot(num$anxiety_score_0to27, horizontal = FALSE, main = "Puntaje de ansiedad
 par(op)
 ```
 
-> **Qué implica.** Es una de las variables más equilibradas del bloque psicológico: prácticamente simétrica (0.20), con media y mediana casi iguales (11.39 frente a 11), así que el promedio sí la representa. Sus 65 atípicos son los participantes con puntajes altos —hasta 27 sobre 27—, no casos anómalos sino la cola natural de una escala de 28 puntos.
+> **Describir:** la distribución es prácticamente simétrica (0,20) y la media y la mediana casi coinciden: 11,39 frente a 11. El boxplot marca 65 casos atípicos, los puntajes altos.
 >
-> **Para el análisis.** Su correlación con el tiempo de pantalla (0.53) es la segunda más alta del dataset, y **resiste bien la poda de atípicos** (baja apenas a 0.50). Eso importa: significa que la asociación no depende de unos pocos casos extremos, sino que se sostiene en toda la muestra. Es la variable que mejor soporta el hallazgo central del proyecto.
+> **Analizar:** aquí la media sí representa, así que se puede usar sin reservas. Y los 65 atípicos no son casos anómalos: son la cola natural de una escala de 28 puntos. Alguien con 27 sobre 27 es un extremo, pero es un extremo posible.
+>
+> Esta es una de las variables que mejor sostiene el hallazgo central del proyecto: **su correlación con el tiempo de pantalla es 0,53, la segunda más alta**, y resiste bien la poda de atípicos (baja apenas a 0,50). Es decir, **la asociación no depende de unos pocos casos extremos: se sostiene en toda la muestra.**
 
 ### Ánimo bajo (`low_mood_score_0to27`)
 
@@ -516,11 +495,11 @@ boxplot(num$low_mood_score_0to27, horizontal = FALSE, main = "Puntaje de ánimo 
 par(op)
 ```
 
-> **Qué implica.** Su distribución tiene una característica que la separa del resto: un **efecto piso**. El primer cuartil es cero, lo que significa que **al menos una cuarta parte de la muestra no reporta ningún síntoma** de ánimo bajo, y la masa de datos se acumula en los valores más bajos de la escala. A partir de ahí la frecuencia decae con una cola larga hasta 19.
+> **Describir:** el primer cuartil es cero y la masa de datos se acumula en los valores bajos, con una cola que llega hasta 19. La mediana es 3; la media, 3,84. Asimetría 0,75.
 >
-> **Para el análisis.** Esa acumulación en cero explica su asimetría (0.75) y tiene una consecuencia práctica: la media (3.84) no describe a nadie. El participante típico está en 3 y un cuarto de la muestra está en 0, así que conviene reportar la mediana y mencionar explícitamente el porcentaje sin síntomas —es el dato más informativo de la variable.
+> **Analizar:** aquí hay un **efecto piso**, y tiene una consecuencia que conviene decir en voz alta: **al menos una cuarta parte de la muestra no reporta ningún síntoma de ánimo bajo**. Eso significa que la media (3,84) no describe a nadie: el participante típico está en 3, y un cuarto de la muestra está en 0.
 >
-> Pese a su forma, su correlación con la pantalla (−0.36) es de las más estables: quitarle sus 17 atípicos la mueve una milésima.
+> **Decisión:** reportar la mediana, y mencionar explícitamente el porcentaje sin síntomas, que es el dato más informativo de esta variable. Su correlación con la pantalla (−0,36) es de las más estables: quitarle sus 17 atípicos la mueve una milésima.
 
 ### Satisfacción con la vida (`life_satisfaction_1to10`)
 
@@ -535,11 +514,11 @@ boxplot(num$life_satisfaction_1to10, horizontal = FALSE,
 par(op)
 ```
 
-> **Qué implica.** Es la única variable de bienestar con asimetría negativa (−0.20), y eso da una lectura particular: **la muestra está mayoritariamente satisfecha**. La media (6.96) está en el percentil 38, así que **cerca de dos tercios de los participantes se declaran más satisfechos que el promedio**. El grueso está en 7 y 8, y la cola se extiende hacia los pocos casos muy insatisfechos.
+> **Describir:** es la única variable de bienestar con asimetría negativa (−0,20). El grueso está en 7 y 8, y la cola se estira hacia los pocos casos muy insatisfechos. Media 6,96; el boxplot marca 26 atípicos.
 >
-> **Para el análisis.** Es el espejo exacto de `daily_notifications`: allí el promedio **exageraba** el fenómeno, aquí lo **minimiza**. En ambos casos la conclusión es la misma —el promedio por sí solo induce a error— pero en direcciones opuestas, y eso refuerza el argumento de acompañarlo siempre de la mediana.
+> **Analizar:** la asimetría negativa se traduce en algo que conviene no pasar por alto: **la muestra está mayoritariamente satisfecha**. La media está en el percentil 38, o sea que **cerca de dos tercios de los participantes se declaran más satisfechos que el promedio**.
 >
-> Su correlación con el tiempo de pantalla es −0.36 y también se mantiene al podar atípicos.
+> Es el espejo exacto de `daily_notifications`. Allí el promedio **exageraba** el fenómeno; aquí lo **minimiza**. La conclusión de fondo es la misma (el promedio por sí solo induce a error) pero en direcciones opuestas, y eso refuerza el argumento de acompañarlo siempre de la mediana. Su correlación con la pantalla es −0,36.
 
 ### Soledad (`loneliness_1to10`)
 
@@ -553,9 +532,11 @@ boxplot(num$loneliness_1to10, horizontal = FALSE, main = "Soledad",
 par(op)
 ```
 
-> **Qué implica.** Es una de las cuatro variables sin ninguna observación atípica, y por una razón que vale la pena señalar: **sus valores son todos igualmente plausibles**. En una escala de 1 a 10 sin concentración en los extremos, el rango intercuartílico cubre la mayor parte de la escala y ningún punto queda fuera. Aquí el boxplot simplemente confirma que no hay nada que reportar.
+> **Describir:** la distribución es prácticamente simétrica (0,21), con media 4,68 y mediana 5. **El boxplot no marca ningún atípico.**
 >
-> **Para el análisis.** Es prácticamente simétrica (0.21) y media y mediana distan tres décimas (4.68 frente a 5), así que entra sin reservas en cualquier método. Su asociación con el tiempo de pantalla (0.34) es moderada y muy estable.
+> **Analizar:** esa ausencia de atípicos merece una frase, porque no siempre significa lo mismo. Aquí es sencillamente que **todos los valores son igualmente plausibles**: en una escala de 1 a 10 sin concentración en los extremos, el rango intercuartílico cubre casi toda la escala y ningún punto queda fuera. El boxplot no está diciendo "no hay nada que reportar", está diciendo "esta variable se comporta como debe".
+>
+> **Decisión:** entra sin reservas en cualquier método. Su asociación con la pantalla (0,34) es moderada y muy estable.
 
 ### Autoestima (`self_esteem_1to10`)
 
@@ -569,9 +550,11 @@ boxplot(num$self_esteem_1to10, horizontal = FALSE, main = "Autoestima",
 par(op)
 ```
 
-> **Qué implica.** Es una de las variables mejor comportadas del conjunto. Su simetría (−0.10) y la ausencia de cola pesada la vuelven **utilizable sin reservas en métodos que asumen normalidad**, cosa que no ocurre con ninguna de las variables de pantalla. Aquí la media sí representa: 6.01 frente a una mediana de 6.
+> **Describir:** la distribución es simétrica (−0,10), con media 6,01 y mediana 6. La dispersión es de las más bajas de la matriz. El boxplot marca 77 atípicos, los casos de autoestima muy baja.
 >
-> Sus 77 atípicos son los casos de autoestima muy baja —hasta 1 sobre 10—, que son plausibles y no anómalos. Su dispersión es de las menores de la matriz, así que en la estandarización ni gana ni pierde protagonismo: entrará en pie de igualdad con las demás escalas de 1 a 10.
+> **Analizar:** es una de las variables mejor comportadas del conjunto, y eso tiene una consecuencia concreta: **es utilizable sin reservas en métodos que asumen normalidad**, cosa que no ocurre con ninguna de las variables de pantalla. Sus 77 atípicos son puntajes de 1 sobre 10: plausibles, no anómalos.
+>
+> **Decisión:** en la estandarización ni gana ni pierde protagonismo, así que entra en pie de igualdad con las demás escalas de 1 a 10.
 
 ### FOMO (`fomo_1to10`)
 
@@ -585,9 +568,11 @@ boxplot(num$fomo_1to10, horizontal = FALSE, main = "FOMO",
 par(op)
 ```
 
-> **Qué implica.** Comparte con la soledad y la comparación social el grupo de variables sin atípicos y prácticamente simétricas (0.24). La distribución es limpia y la media representa al participante típico.
+> **Describir:** prácticamente simétrica (0,24), sin ningún atípico, con media 4,64 y mediana 5.
 >
-> **Para el análisis.** Su correlación con el tiempo de pantalla (0.43) es **la tercera más alta del dataset**, por encima de la soledad y la comparación social, y no se mueve nada al quitarle atípicos —porque no tiene. Es una de las asociaciones más sólidas del proyecto: fuerte y sin el menor indicio de estar impulsada por casos extremos.
+> **Analizar:** pertenece al grupo de variables limpias, junto con la soledad y la comparación social. Y sin embargo **su correlación con el tiempo de pantalla es 0,43: la tercera más alta del dataset**, por encima de las otras dos.
+>
+> Eso la vuelve una de las asociaciones más sólidas del proyecto: fuerte, y sin el menor indicio de estar impulsada por casos extremos (porque no tiene ninguno). **Para el informe:** cuando alguien pregunte si la relación entre pantalla y bienestar depende de unos pocos casos raros, esta variable es la mejor respuesta.
 
 ### Comparación social (`social_comparison_1to10`)
 
@@ -601,9 +586,11 @@ boxplot(num$social_comparison_1to10, horizontal = FALSE, main = "Comparación so
 par(op)
 ```
 
-> **Qué implica.** Es la variable más simétrica de **todo el dataset** (0.03), y la única sin atípicos, sin acumulación en los extremos y con media y mediana prácticamente idénticas (5.32 frente a 5). Si hubiera que elegir una variable "bien comportada" del conjunto, sería esta.
+> **Describir:** asimetría 0,03 y media y mediana prácticamente idénticas (5,32 frente a 5). Sin atípicos y sin acumulación en los extremos. Es la distribución más simétrica de **todo el dataset**.
 >
-> **Para el análisis.** Esa limpieza la convierte en la candidata más segura para métodos que asuman normalidad, y en un buen punto de referencia: si un procedimiento falla con `social_comparison`, el problema está en el método y no en los datos. Su asociación con la pantalla es moderada (0.35).
+> **Analizar:** si hubiera que elegir una variable "bien comportada" del conjunto, sería esta. Y esa limpieza no es solo una curiosidad: la convierte en **el mejor punto de referencia del proyecto**. Si un procedimiento estadístico falla con `social_comparison`, el problema está en el método y no en los datos (eso nos va a servir más adelante para distinguir un error nuestro de un dato problemático).
+>
+> **Decisión:** se usa como control. Su asociación con la pantalla es moderada (0,35).
 
 ### Actividad física (`physical_activity_days_per_week`)
 
@@ -618,15 +605,20 @@ boxplot(num$physical_activity_days_per_week, horizontal = FALSE,
 par(op)
 ```
 
-> **Qué implica.** Como las plataformas, es un **recuento acotado** —de 0 a 7 días— y no una medición continua. Sus ocho valores posibles explican que el boxplot no marque atípicos: con un rango intercuartílico de 2 a 4, ningún día de la semana queda lo bastante lejos para ser señalado.
+> **Describir:** recuento acotado de 0 a 7 días, con el grueso entre 2 y 4. Asimetría 0,17 y **ningún atípico**.
 >
-> **Para el análisis.** Es, junto con la edad, la variable más independiente del proyecto: su correlación con el tiempo de pantalla es **0.004**, es decir, ninguna. El uso de pantalla y la actividad física se comportan como fenómenos separados en estos datos, lo que descarta otra de las explicaciones intuitivas —que el sedentarismo digital desplace al ejercicio— y deja el campo libre a las variables psicológicas, que sí concentran todas las asociaciones relevantes.
+> **Analizar:** como en plataformas, los ocho valores posibles explican que el boxplot no marque nada: el rango intercuartílico (de 2 a 4) es tan ancho en proporción al recorrido total que ningún día queda lo bastante lejos.
+>
+> Pero lo que importa de esta variable es otra cosa: **su correlación con el tiempo de pantalla es 0,004. Ninguna.** El uso de pantalla y la actividad física se comportan como fenómenos separados en estos datos. **Para el informe:** eso descarta otra de las explicaciones intuitivas (que el sedentarismo digital desplace al ejercicio) y deja el campo libre a las variables psicológicas, que sí concentran todas las asociaciones relevantes.
 
-**Resumen del análisis univariado:** las variables con mayor asimetría son las de *comportamiento de uso de pantalla* (`daily_notifications`, `daily_screen_hours`, `minutes_to_first_check_after_waking`), todas con colas largas hacia la derecha porque reflejan comportamientos donde unos pocos usuarios son "extremos". En contraste, las variables de *bienestar psicológico* tipo Likert (`self_esteem_1to10`, `social_comparison_1to10`, `fomo_1to10`, `loneliness_1to10`) y `avg_sleep_hours` son casi simétricas — coherente con que son escalas diseñadas para capturar un rango "normal" de respuesta.
+Después de las catorce, el patrón es claro y se puede decir en dos frases:
 
-Conviene recordar que estos datos son **simulados**. Las formas de distribución que acabamos de describir reflejan el diseño del generador y no leyes del comportamiento humano: cuando decimos que una variable "se comporta como una escala bien diseñada" o que dos variables "son psicológicamente cercanas", lo hacemos como descripción de la estructura de los datos, no como afirmación sustantiva sobre personas reales.
+- Las variables de **comportamiento de pantalla** (`daily_notifications`, `daily_screen_hours`, `minutes_to_first_check_after_waking`) son las asimétricas. Todas tienen colas largas hacia la derecha, porque reflejan comportamientos donde unos pocos usuarios son extremos.
+- Las de **bienestar psicológico** tipo Likert (`self_esteem_1to10`, `social_comparison_1to10`, `fomo_1to10`, `loneliness_1to10`) y `avg_sleep_hours` son casi simétricas. Se comportan como escalas diseñadas para capturar un rango normal de respuesta.
 
-**De todo lo anterior, queremos quedarnos con que nuestra variable objetivo será** `daily_screen_hours`
+Y una advertencia que vale para todo el informe: **estos datos son simulados**. Las formas que acabamos de describir reflejan el diseño del generador, no leyes del comportamiento humano. Cuando decimos que una escala "está bien diseñada" o que una variable "se comporta como debe", hablamos de la estructura del dataset, no de personas reales.
+
+**Nuestra variable objetivo será `daily_screen_hours`**, y no por casualidad: es la que articula casi todas las relaciones que vamos a encontrar, y la pregunta del proyecto es justamente de qué depende.
 
 ## Análisis univariado: Variables categóricas
 
@@ -727,17 +719,22 @@ barplot(table(datos$wellbeing_band), horiz = TRUE, las = 1,
 par(op)
 ```
 
-**Qué implica.** El **género** está repartido casi por mitades entre femenino (3240) y masculino (3261), con una minoría no binaria (276) y 223 que prefirieron no responder —que son los 70 casos que recodificamos más los 153 originales—. En **ocupación** dominan estudiantes (2715) y empleados a tiempo completo (2285). Por **región**, la muestra se concentra en Asia (1959), Norteamérica (1842) y Europa (1834), con Oceanía como el grupo más pequeño (270).
-
-En cuanto al uso, **TikTok** (1733) e **Instagram** (1703) son las plataformas más usadas, seguidas de **YouTube** (1264). La mayoría usa el celular de noche solo a veces (2616) o con frecuencia (2086). El **propósito principal** es el entretenimiento, y llama la atención que 4811 participantes (69%) **no** usan límites de tiempo en pantalla, mientras 2369 intentaron un detox digital y fracasaron frente a 1122 que lo lograron.
-
-**Para el análisis.** Las **bandas de bienestar** están claramente desbalanceadas: la mayoría cae en "Moderate" (3766), seguida de "Good" (2260) y solo 974 en "At-risk". Ese desbalance importa para lo que viene: cualquier procedimiento que divida la muestra por banda de bienestar trabajará con un grupo minoritario de menos de mil casos. Algo parecido ocurre con `gender`, donde las categorías "Non-binary" y "Prefer not to say" son pequeñas —276 y 223— mientras las dos principales están equilibradas.
+> **Describir:** el **género** está repartido casi por mitades entre femenino (3240) y masculino (3261), con una minoría no binaria (276) y 223 que prefirieron no responder (los 70 que recodificamos más los 153 originales). En **ocupación** dominan estudiantes (2715) y empleados a tiempo completo (2285). Por **región**, la muestra se concentra en Asia (1959), Norteamérica (1842) y Europa (1834), con Oceanía como el grupo más pequeño (270).
+>
+> En cuanto al uso, **TikTok** (1733) e **Instagram** (1703) son las plataformas más usadas, seguidas de **YouTube** (1264). La mayoría usa el celular de noche solo a veces (2616) o con frecuencia (2086). El **propósito principal** es el entretenimiento, y llama la atención que 4811 participantes (69%) **no** usan límites de tiempo en pantalla, mientras 2369 intentaron un detox digital y fracasaron frente a 1122 que lo lograron.
+>
+> **Analizar:** hay dos cosas que van a importar más adelante.
+>
+> - **Las bandas de bienestar están desbalanceadas.** La mayoría cae en "Moderate" (3766), seguida de "Good" (2260), y solo 974 en "At-risk". **Decisión:** cualquier procedimiento que divida la muestra por banda de bienestar va a trabajar con un grupo minoritario de menos de mil casos, y hay que tenerlo presente antes de sacar conclusiones sobre "At-risk".
+> - **El género está equilibrado en sus dos categorías principales, pero no en las minoritarias.** "Non-binary" (276) y "Prefer not to say" (223) son grupos pequeños. **Para el informe:** sirven para describir la muestra, pero no para comparar promedios entre ellos.
+>
+> Y un dato que dice bastante de los participantes: **siete de cada diez no usan ningún límite de tiempo en pantalla**. El uso intensivo que vamos a analizar ocurre, en su mayoría, sin ninguna barrera autoimpuesta.
 
 # Análisis bivariado
 
 ## Matriz de correlaciones
 
-Abrimos el análisis bivariado con la **matriz de correlaciones** en lugar de ir par por par. La razón es aritmética: con 14 variables hay **91 pares posibles** (14·13/2), y examinarlos uno a uno es inabarcable. La matriz los resume todos en una sola imagen y deja ver la **estructura del conjunto** —qué variables se mueven juntas y cuáles son independientes— antes de entrar en detalle.
+Abrimos el análisis bivariado con la **matriz de correlaciones** en lugar de ir par por par. La razón es aritmética: con 14 variables hay **91 pares posibles** (14·13/2), y examinarlos uno a uno es inabarcable. La matriz los resume todos en una sola imagen y deja ver la **estructura del conjunto** (qué variables se mueven juntas y cuáles son independientes) antes de entrar en detalle.
 
 ```{r, fig.width=10, fig.height=10}
 cm  <- cor(num)
@@ -757,7 +754,9 @@ box(col = "grey60")
 par(op)
 ```
 
-La primera lectura salta a la vista: **la matriz está mayoritariamente pálida**. La mayoría de las 91 casillas están cerca del blanco, es decir, cerca de cero. Eso ya es un hallazgo: no estamos ante un conjunto donde todo se relacione con todo, sino ante una estructura con unos pocos vínculos fuertes y mucho ruido de fondo.
+> **Describir:** la matriz está **mayoritariamente pálida**. De las 91 casillas, la gran mayoría están cerca del blanco, es decir, cerca de cero. Solo se encienden unas pocas.
+>
+> **Analizar:** eso ya es un hallazgo, y no el que uno esperaría. **No estamos ante un conjunto donde todo se relacione con todo**, sino ante una estructura con unos pocos vínculos fuertes y mucho ruido de fondo. **Decisión:** no podemos resumir esto variable por variable; hay que encontrar cuáles son esos pocos vínculos.
 
 Para cuantificarlo, extraemos los pares que superan un umbral:
 
@@ -771,20 +770,20 @@ data.frame(variable_1 = colnames(num)[idx[o, 1]],
            r = round(c0[idx[o, ]], 3))
 ```
 
-**Solo nueve de los 91 pares (10%) superan \|r\| = 0.30.** Y de esos nueve, **ocho involucran a `daily_screen_hours`**; la única excepción es ansiedad con notificaciones (0.32).
-
-Eso revela la forma real del conjunto: no hay un bloque de variables que covaríen entre sí, sino **una variable que se conecta con casi todas las demás**. Medido:
-
-- La correlación media de `daily_screen_hours` con las otras trece es **0.333**.
-- La correlación media **entre** esas trece es **0.115**.
-
-Tres veces menor. El tiempo de pantalla no es una variable más de la matriz: es **el nexo que la organiza**.
-
-**Y también importa lo que no correlaciona.** La edad (0.007), los minutos hasta revisar el celular al despertar (0.010), la actividad física (0.004) y el número de plataformas (−0.013) son **ruido puro**. Son cuatro de las explicaciones más intuitivas del uso problemático —que sea cosa de los jóvenes, de la inmediatez al despertar, del sedentarismo o de tener muchas redes— y ninguna se sostiene en estos datos.
+> **Describir:** solo **nueve de los 91 pares** (el 10%) superan |r| = 0,30. Y de esos nueve, **ocho involucran a `daily_screen_hours`**; la única excepción es ansiedad con notificaciones (0,32).
+>
+> **Analizar:** aquí está la forma real del conjunto. No hay un bloque de variables que covaríen entre sí, sino **una variable que se conecta con casi todas las demás**. Y lo medimos:
+>
+> - La correlación media de `daily_screen_hours` con las otras trece es **0,333**.
+> - La correlación media **entre** esas trece es **0,115**.
+>
+> Tres veces menor. El tiempo de pantalla no es una variable más de la matriz: es **el nexo que la organiza**.
+>
+> **Y también importa lo que no correlaciona.** La edad (0,007), los minutos hasta revisar el celular al despertar (0,010), la actividad física (0,004) y el número de plataformas (−0,013) son **ruido puro**. Son cuatro de las explicaciones más intuitivas del uso problemático (que sea cosa de los jóvenes, de la inmediatez al despertar, del sedentarismo o de tener muchas redes) y **ninguna se sostiene**. **Para el informe:** eso acota el problema a las variables psicológicas, que son las únicas que concentran las asociaciones.
 
 ## Comparación de dos variables
 
-Con el mapa general a la vista, pasamos al detalle. Cada variable numérica ya trae su propio boxplot, así que el siguiente paso es comparar dos variables a la vez.De los 91 pares tenemos 9 que superan el **\|r\| = 0.30**, por lo que haremos la comparacion de esos.
+Con el mapa general a la vista, pasamos al detalle: **los nueve pares que superan |r| = 0,30**. No vamos a revisar los 91 (sería repetir lo que la matriz ya dijo). Vamos a los que importan, y en cada uno la pregunta es la misma: **¿la relación es real, o la sostienen unos pocos casos?**
 
 ### 1. `daily_screen_hours` vs `daily_notifications`
 
@@ -816,7 +815,14 @@ c(pearson  = round(cor(completar_datos$daily_screen_hours,
 g1
 ```
 
-La nube tiene una forma de elipse inclinada hacia arriba, sin curvatura y sin grupos aparte. Con una correlación de Pearson de 0.606, parecida a la de Spearman, la más alta que se verá en el dataset. Podemos decir entonces que más notificaciones llevan a que la persona vea el celular más veces. Y así mismo quien gasta mas horas en el celular recibe más notificaciones, representando entonces la frecuencia de interrupción y la duración total.
+> **Describir:** la nube tiene forma de elipse inclinada hacia arriba, sin curvatura y sin grupos separados. La correlación es 0,61 (la más alta de todo el dataset) y la de Spearman coincide. Entre el cuartil bajo y el alto de pantalla, las notificaciones pasan de 24 a 83.
+>
+> **Analizar:** dos cosas.
+>
+> - **El número resume bien lo que se ve.** La elipse no tiene curva ni manchas aparte, así que la relación es lineal y la correlación de Pearson la describe bien. Si la nube hubiera sido una curva, ese 0,61 nos habría engañado.
+> - **Son dos caras del mismo fenómeno.** Quien pasa más horas frente a la pantalla recibe más notificaciones, y quien recibe más notificaciones pasa más horas frente a la pantalla. Las dos variables miden aspectos del mismo comportamiento: la duración total y la frecuencia de interrupción.
+>
+> **Para el informe:** dejarlas ambas, pero sabiendo que apuntan a lo mismo desde dos ángulos. Cuando lleguemos a los componentes principales, esa redundancia va a importar.
 
 ### 2. `daily_screen_hours` vs `anxiety_score_0to27`
 
@@ -842,8 +848,11 @@ c(pearson  = round(cor(completar_datos$daily_screen_hours,
 g2
 ```
 
-La nube alargada y lineal. Entre el cuartil bajo y el alto de pantalla hay una diferencia de 6.15 puntos.
-Se nota un patrón concreto: quien pasa más horas frente a la pantalla reporta más síntomas de ansiedad, y la diferencia entre el cuartil bajo y el alto en un contexto médico separa a alguien con ansiedad moderada a alguien con ansiedad alta. Se puede interpretar como que la pantalla genere ansiedad (por comparación, sobreestimulación, FOMO) pero también puede ser que la persona que esta ansiosa busque de la pantalla para calmarse.No se puede saber cual es la lectura correcta, sin embargo sabemos que son dos variables de las que no se puede habolar de una sin la otra.
+> **Describir:** la nube es alargada y lineal. Entre el cuartil bajo y el alto de pantalla hay 6,15 puntos de diferencia en ansiedad. La correlación es 0,53.
+>
+> **Analizar:** la diferencia de 6 puntos sobre una escala de 27 no es un detalle: separa a alguien con ansiedad moderada de alguien con ansiedad alta. Y sobre el mecanismo hay dos lecturas posibles, **y con estos datos no podemos elegir entre ellas**: puede ser que la pantalla genere ansiedad (por comparación, sobreestimulación, FOMO) o que la persona ansiosa busque la pantalla para calmarse.
+>
+> **Para el informe:** es la advertencia de siempre, pero aquí pesa más que en ningún otro par. Con una sola medición por participante, la dirección de la relación es indistinguible. Lo único que podemos afirmar es que **estas dos variables no aparecen la una sin la otra**.
 
 ### 3. `fomo_1to10` vs `daily_screen_hours`
 ```{r}
@@ -860,11 +869,11 @@ c(fomo_q1 = round(mean(bajo), 2), fomo_q3 = round(mean(alto), 2),
   dif_puntos = round(mean(alto) - mean(bajo), 2))
 g4
 ```
-FOMO solo toma 10 valores enteros, así que un scatterplot convencional no permite ver la densidad. Por eso se grafica el promedio de horas para cada nivel de FOMO.
-
-El patrón es claro y monótono: la media de horas de pantalla sube de manera consistente con cada nivel de FOMO, y los intervalos de confianza no se solapan entre los niveles extremos (FOMO 1 vs FOMO 10). La diferencia de quartiles (2.26 puntos de 10) es un efecto moderado pero real. Lo importante es que este par no tiene atípicos y es casi simétrico, así que no es un artefacto de unos pocos usuarios extremos, es una fuerte tendencia de toda la muestra.
-
-Describe un comportamiento especifico: quien teme quedarse fuera de lo que pasa en las redes, pasa más tiempo en ellas. Y tiene sentido puesto que el FOMO empuja a revisar constantemente para "no perderse nada".
+> **Describir:** el FOMO solo toma diez valores enteros, así que en lugar de una nube conviene graficar las cajas de cada nivel. Las medianas de horas de pantalla suben de forma escalonada con el nivel de FOMO. Entre el cuartil bajo y el alto hay 2,26 puntos de diferencia.
+>
+> **Analizar:** el patrón es **monótono**: sube con cada nivel, sin saltos ni retrocesos, y las cajas de los extremos apenas se tocan. Con diez niveles, una escalera así no se produce por casualidad. Eso es lo que hace creíble la tendencia.
+>
+> **Y lo más importante:** este par no tiene ningún caso atípico y es casi simétrico. Eso descarta la explicación fácil (**no es un artefacto de unos pocos usuarios extremos, es una tendencia de toda la muestra**). **Para el informe:** es la mejor evidencia de que la relación entre pantalla y bienestar no descansa en casos raros.
 
 ### 4. `daily_screen_hours` vs `avg_sleep_hours`
 ```{r}
@@ -883,9 +892,11 @@ c(sueno_q1 = round(mean(bajo), 2), sueno_q3 = round(mean(alto), 2),
 g3
 ```
 
-El gráfico muestra una nube inclinada hacia abajo. Entre el cuartil bajo y el cuartil alto hay una diferencia de 0.81 horas, casi una hora completa. 
-
-Quien más usa el celular tiende a dormir menos. Y una hora menos de sueño es clínicamente relevante ya que hace la diferencia entre un descanso adecuado y una deuda crónica.Se sabe que el uso de la pantalla ocupa tiempo en la cama que antes era de sueño y la luz azul junto con la estimulación retrasan la conciliación.
+> **Describir:** la nube está inclinada hacia abajo. Entre el cuartil bajo y el alto de pantalla hay 0,81 horas de diferencia: casi una hora completa. La correlación es −0,38.
+>
+> **Analizar:** una hora menos de sueño no es un detalle estadístico: es la diferencia entre un descanso adecuado y una deuda que se acumula. Es, además, la asociación negativa más fuerte del dataset.
+>
+> Sobre el mecanismo hay dos explicaciones que la literatura sostiene y que estos datos no pueden separar: la pantalla **ocupa tiempo** que antes era de sueño, y la luz y la estimulación **retrasan** la conciliación. **Para el informe:** las dos apuntan en la misma dirección, así que no cambian la conclusión, pero conviene no elegir una sin datos que la respalden.
 
 ### 5. `daily_screen_hours` vs `life_satisfaction_1to10`
 ```{r}
@@ -903,8 +914,11 @@ c(sat_q1 = round(mean(bajo), 2), sat_q3 = round(mean(alto), 2),
   dif_puntos = round(mean(bajo) - mean(alto), 2))
 g5
 ```
-Se puede ver como las medianas bajan a medida que sube la satisfacción: ≈7.6 h en satisfacción=1 y ≈2.4 h en satisfacción=10. El patrón es descendente pero con solapamiento.
-Esto quiere decir que quien se declara menos satisfecho con su vida pasa más tiempo en pantalla. Junto con el análisis a las horas de sueño lo más lógico es que el tiempo en pantalla desplaza actividades que sí construyen satisfacción (relaciones presenciales, descanso, actividad física). No es que la pantalla cause insatisfacción directamente; es que ocupa el lugar de lo que sí la produce.
+> **Describir:** las medianas de horas de pantalla bajan a medida que sube la satisfacción: ≈7,6 h en satisfacción 1 y ≈2,4 h en satisfacción 10. El patrón es descendente, pero con bastante solapamiento entre las cajas. Correlación −0,36.
+>
+> **Analizar:** la tendencia existe y va siempre en la misma dirección, pero **el solapamiento importa**: no podemos decir que el nivel de satisfacción permita adivinar cuántas horas usa alguien. Y sobre el mecanismo, la lectura más razonable (aunque no la única) es que el tiempo de pantalla **desplaza actividades que sí construyen satisfacción**: relaciones cara a cara, descanso, actividad física. No es que la pantalla cause insatisfacción directamente; es que ocupa el lugar de lo que sí la produce.
+>
+> **Para el informe:** eso es una hipótesis, no un resultado. Pero encaja con lo que acabamos de ver en el sueño.
 
 ### 6. `daily_screen_hours` vs `low_mood_score_0to27`
 ```{r}
@@ -930,11 +944,13 @@ c(mood_q1 = round(mean(bajo), 2), mood_q3 = round(mean(alto), 2),
 
 g6
 ```
-Este es un caso particular, las medianas de horas de pantalla bajan con el puntaje de ánimo bajo: ≈4 h en puntaje 0, ≈1.5 h en puntaje 19. El n se concentra en los puntajes bajos (0-5); los puntajes altos tienen pocos casos. Eso explica la correlación negativa.
-
-Este patrón nos muestra algo diferente a los análisis hasta ahora, puesto que a mayor malestar casi siempre conduce a mayor cantidad de horas frente a la pantalla. Sin embargo, en la gráfica podemos ver que quien reporta más síntomas de ánimo bajo usa menos el celular, no más.
-
-La interpretación más adecuada es que la ansiedad y la depresión actúan de forma contraria sobre el uso del celular: la ansiedad pega a la persona a la pantalla mientras que la depresión le quita el interés, incluso por las redes.
+> **Describir:** el `n` se concentra en los puntajes bajos (0 a 5) y los puntajes altos tienen pocos casos. Las medianas de horas de pantalla **bajan** con el ánimo bajo: ≈4 h en puntaje 0, ≈1,5 h en puntaje 19. Correlación −0,36.
+>
+> **Analizar:** aquí está la anomalía más interesante del proyecto. Este patrón va **al revés** de todo lo anterior: en ansiedad y FOMO, más malestar venía con más pantalla; aquí, quien reporta **más** síntomas de ánimo bajo usa **menos** el celular.
+>
+> Y hay que leerlo con cuidado, por la escala: la media de ánimo bajo es 3,84 sobre 27 y un cuarto de la muestra está en 0. Los puntajes altos son casos raros, así que las medianas de esos grupos se apoyan en pocas observaciones.
+>
+> **Para el informe:** la interpretación más razonable es que **ansiedad y ánimo bajo actúan en direcciones contrarias** sobre el uso del celular: la ansiedad pega a la persona a la pantalla, mientras que el ánimo bajo le quita el interés, incluso por las redes. Encaja con que la correlación entre ansiedad y ánimo bajo sea de −0,21, que ya nos había llamado la atención en la matriz.
 
 ### 7. `social_comparison_1to10` vs `daily_screen_hours`
 ```{r}
@@ -958,11 +974,11 @@ c(pearson  = round(cor(completar_datos$daily_screen_hours,
                        method = "spearman"), 3))
 g7
 ```
-El gráfico muestra cómo las medianas de comparación social van subiendo de forma escalonada a medida que aumentan las horas frente a la pantalla.
-
-Mientras que las personas en el cuartil de menor uso ($\le 1.8$ horas) registran un puntaje promedio de 4.57, quienes están en el cuartil de mayor uso ($\ge 4.3$ horas) suben a 6.35 puntos (una diferencia de $+1.78$ en la escala).
-
-¿Qué nos dice esto? Pasar más tiempo en redes expone de forma constante a la vida "idealizada" que otros publican. No es un salto repentino, sino un desgaste paulatino: entre más tiempo se pasa consumiendo contenido ajeno, mayor es la tendencia a medir el valor o estilo de vida propio en función de los demás.
+> **Describir:** las medianas de comparación social suben de forma escalonada con las horas de pantalla. Quienes están en el cuartil de menor uso (≤1,8 h) promedian 4,57; quienes están en el de mayor uso (≥4,3 h), 6,35. Diferencia: +1,78 sobre 10.
+>
+> **Analizar:** el patrón no da saltos: sube de a poco, y eso la gráfica lo muestra como cajas que se van desplazando. La lectura que mejor encaja es que pasar más tiempo en redes expone de forma constante a la vida idealizada que otros publican. No es un golpe único, es un **desgaste acumulado**: entre más contenido ajeno se consume, más se mide el propio valor en función de los demás.
+>
+> **Para el informe:** es una explicación plausible, no una prueba. Pero el efecto es moderado y el patrón es regular, así que la tendencia se sostiene.
 
 ### 8. `loneliness_1to10` vs `daily_screen_hours`
 ```{r}
@@ -986,11 +1002,13 @@ c(pearson  = round(cor(completar_datos$daily_screen_hours,
                        method = "spearman"), 3))
 g8
 ```
-Este es un caso particular, las medianas de horas de pantalla bajan con el puntaje de ánimo bajo: ≈4 h en puntaje 0, La gráfica refleja un patrón ascendente claro: las cajas se van desplazando hacia arriba a medida que se acumulan horas diarias de uso.
-
-El grupo con menor tiempo de pantalla promedia 3.89 en la escala de soledad, mientras que el grupo con mayor exposición digital alcanza los 5.67 puntos (un aumento de $+1.78$).
-
-¿Qué nos dice esto? Aunque las redes sociales prometen conectar a la gente, un uso desmedido suele desplazar la interacción cara a cara y las relaciones profundas por un consumo pasivo. La pantalla funciona como un sustituto que calma momentáneamente la desconexión, pero que a largo plazo termina acentuando la sensación de aislamiento.
+> **Describir:** las cajas se desplazan hacia arriba a medida que se acumulan horas de uso. El grupo con menor tiempo de pantalla promedia 3,89 en la escala de soledad; el de mayor exposición alcanza 5,67. Aumento: +1,78 sobre 10.
+>
+> **Analizar:** el patrón es ascendente y claro, del mismo tamaño que el de comparación social.
+>
+> Y aquí hay una paradoja que vale la pena nombrar: **las redes prometen conectar y el resultado apunta a lo contrario**. La lectura más razonable es que el uso desmedido **desplaza la interacción cara a cara** por un consumo pasivo. La pantalla calma momentáneamente la sensación de desconexión, pero no la resuelve, y a la larga la acentúa.
+>
+> **Para el informe:** es una hipótesis, igual que antes. Pero conviene mirar un número que la respalda: la soledad correlaciona **más fuerte con las horas de pantalla** (0,34) que **con la comparación social** (0,11), que sería lo esperable si las redes conectaran de verdad.
 
 ### 9. `anxiety_score_0to27` vs `daily_notifications`
 ```{r}
@@ -1015,122 +1033,40 @@ c(pearson  = round(cor(completar_datos$daily_notifications,
                        method = "spearman"), 3))
 g9
 ```
-A diferencia de los casos anteriores, aquí no comparamos horas de uso sino el impacto de las alertas. La nube de puntos muestra una inclinación positiva clara y continua.
+> **Describir:** a diferencia de los pares anteriores, aquí no se comparan horas de uso sino alertas. La nube es positiva y continua. Quienes reciben pocas notificaciones (≤20) promedian 9,44 puntos de ansiedad; quienes reciben muchas (≥83), 13,57. Salto: +4,13 sobre 27.
+>
+> **Analizar:** este es **el único par destacado que no involucra las horas de pantalla**, y por eso es el más informativo de los nueve. Revela algo que los otros no podían mostrar: **el problema no es solo cuánto tiempo se usa el celular, sino cuántas veces interrumpe**.
+>
+> El mecanismo que encaja es que cada notificación genera un microestímulo de alerta o expectativa que rompe la concentración y mantiene al cerebro en un estado de hipervigilancia. **Para el informe:** eso tiene una consecuencia práctica interesante. Si el mecanismo fuera solo la duración, bastaría con usar menos horas; si cuenta la frecuencia de interrupción, **el modo de uso importa tanto como la cantidad**.
 
-Quienes reciben pocas notificaciones al día ($\le 20$) registran una ansiedad promedio de 9.44 puntos. En cambio, quienes enfrentan un flujo constante de alertas ($\ge 83$ notificaciones) alcanzan los 13.57 puntos (un salto de $+4.13$ puntos sobre 27).
+# La puerta a lo multivariado
 
-¿Qué nos dice esto? Este es el único par destacado que no involucra directamente las horas frente a la pantalla, lo que revela un factor clave: el problema no es solo cuánto tiempo usas el celular, sino cuántas veces te interrumpe. Cada notificación genera un microestímulo de alerta o expectativa que rompe la concentración y mantiene al cerebro en un estado de hipervigilancia continua.
+Con todo lo que llevamos, quedan tres preguntas abiertas, y cada una es una unidad del resto del curso:
 
-<!-- ```{r} -->
+| Lo que vimos | La pregunta que queda | Con qué se responde |
+|---|---|---|
+| Revisamos los datos **variable por variable** | ¿Hay participantes raros **en la combinación**, aunque ninguna medición por separado sea extrema? | Distancia de Mahalanobis |
+| Las variables de pantalla **se mueven con las psicológicas** | ¿Hay **una sola dimensión** detrás de todas? ¿O varias? | Componentes principales |
+| `daily_screen_hours` **se conecta con casi todo** | ¿Se pueden **separar perfiles** de participantes con esas relaciones? | Análisis de conglomerados |
 
-<!-- boxplot(avg_sleep_hours ~ self_esteem_1to10, data = completar_datos, -->
+Y ya tenemos una pista de por dónde va a empezar esa fase:
 
-<!--         main = "Autoestima según las horas de sueño", -->
+```{r}
+m  <- colMeans(num)
+S  <- cov(num)
+d2 <- mahalanobis(num, m, S)
+sum(d2 > qchisq(0.999, ncol(num)))
+```
 
-<!--         xlab = "Autoestima", ylab = "promedio de horas de sueño", -->
+**69 observaciones** superan el umbral, cuando bajo normalidad se esperarían unas 7. Es decir: hay participantes que son raros **en la combinación** de sus variables aunque, una por una, ninguna de sus mediciones sea extrema. Esa es exactamente la primera pregunta de la tabla, y ya asoma.
 
-<!--         col = "lightyellow") -->
+# Conclusión
 
-<!-- ``` -->
+No aprendimos ninguna técnica nueva: usamos las del primer corte, todas juntas, sobre un solo problema. Lo que quedó claro es **para qué sirve cada una**:
 
-<!-- No podemos hacer un boxplot de todas las variables a la vez, puesto que nuestro dataset contiene más que solo variables numéricas -->
+- **Revisar la calidad** sirvió para descubrir que los 175 `NA` eran en realidad 173 filas, y para decidir con criterio en lugar de por costumbre.
+- **Mirar cada variable** sirvió para saber cuáles se comportan como se espera y cuáles no, y para entender que el promedio no siempre representa a nadie.
+- **Mirar las variables juntas** sirvió para encontrar que el tiempo de pantalla es el nexo de toda la matriz, y que cuatro de las explicaciones más intuitivas no se sostienen.
+- **Comparar los pares** sirvió para ver la relación por dentro: dónde es lineal, qué la sostiene, y dónde las direcciones se contradicen.
 
-<!-- ```{r} -->
-
-<!-- plot(completar_datos$daily_screen_hours, completar_datos$age, -->
-
-<!--      pch = 16, col = rgb(0, 0, 0, 0.15), -->
-
-<!--      xlab = "Horas diarias en pantalla", ylab = "edad", -->
-
-<!--      main = "Correlación entre la edad y el tiempo diario de pantalla") -->
-
-<!-- ``` -->
-
-<!-- Mediante el grafico de densidad de Kernel,analizamos 3 variables con un h diferente que se calcula con `bw.nrd0()` y ajusta el suavisado a la dispersion de cada variable. `daily_screen_hours` se ve que tiene una distribucion asimetrica positiva dejando en claro que la mayoria de personas ve el celular entre 2-3 horas y una minoria de gente tiene un uso muy alto. La variable `avg_sleep_hours` se ve que tiene un distribucion mas simetrica con un h de 0.134 porque tiene una dispersion baja. La variable `anxiety_score_0to27` tiene una despersion mas alta, por eso el h, ademas de mostrar una asimetria positiva. -->
-
-<!-- ```{r} -->
-
-<!-- par(mfrow = c(1, 3)) -->
-
-<!-- for (v in c("daily_screen_hours", "avg_sleep_hours", "anxiety_score_0to27")) { -->
-
-<!--   x <- completar_datos[[v]] -->
-
-<!--   h <- bw.nrd0(x) -->
-
-<!--   plot(density(x, bw = h), lwd = 2, -->
-
-<!--        main = paste0(v, "\n(h = ", round(h, 3), ")"), xlab = v) -->
-
-<!--   rug(x) -->
-
-<!-- } -->
-
-<!-- par(mfrow = c(1, 1)) -->
-
-<!-- ``` -->
-
-<!-- Ahora usamos otro grafico de densidad de Kernel pero superponiendo 3 curvas, una por grupo de `wellbeing_band`. Cada grupo tiene un tiempo de pantalla muy distinto, Good se concentra bajo, Moderate en el medio y At-risk esta mucho mas ancha. -->
-
-<!-- ```{r} -->
-
-<!-- bandas <- unique(completar_datos$wellbeing_band) -->
-
-<!-- h <- bw.nrd0(completar_datos$daily_screen_hours) -->
-
-<!-- plot(density(completar_datos$daily_screen_hours, bw = h), type = "n", -->
-
-<!--      main = paste0("Horas de pantalla por banda de bienestar (h = ", round(h, 3), ")"), -->
-
-<!--      xlab = "horas diarias") -->
-
-<!-- for (i in seq_along(bandas)) { -->
-
-<!--   sub <- completar_datos$daily_screen_hours[completar_datos$wellbeing_band == bandas[i]] -->
-
-<!--   lines(density(sub, bw = h), col = i, lwd = 2) -->
-
-<!-- } -->
-
-<!-- legend("topright", legend = bandas, col = seq_along(bandas), lwd = 2, bty = "n") -->
-
-<!-- ``` -->
-
-<!-- En este diagrama de dispersión, donde analizamos si las horas de pantalla determinan la ansiedad de una persona. Se ve una nube ancha con una correlacion positiva pero que no explica nada al simplificar una relacion con bastante ruido. -->
-
-<!-- ```{r} -->
-
-<!-- plot(completar_datos$daily_screen_hours, completar_datos$anxiety_score_0to27, -->
-
-<!--      pch = 19, col = rgb(0, 0, 0, 0.35), -->
-
-<!--      xlab = "horas diarias de pantalla", ylab = "puntaje de ansiedad (0-27)", -->
-
-<!--      main = "¿La correlación describe bien lo que pasa?") -->
-
-<!-- abline(lm(anxiety_score_0to27 ~ daily_screen_hours, data = completar_datos), -->
-
-<!--        col = "firebrick", lwd = 2) -->
-
-<!-- cor(completar_datos$daily_screen_hours, completar_datos$anxiety_score_0to27) -->
-
-<!-- ``` -->
-
-<!-- Hacemos un boxplot comparativo con las variables numéricas estandarizadas. En este data set variables como `daily_notifications`, `minutes_to_first_check_after_waking`, `daily_screen_hours`. Son las que mas tienen datos desbalanceados hacia arriba. -->
-
-<!-- ```{r} -->
-
-<!-- par(mar = c(12, 4, 4, 2)) -->
-
-<!-- boxplot(scale(num), las = 2, cex.axis = 0.7, -->
-
-<!--         main = "Variables numéricas estandarizadas", -->
-
-<!--         col = "grey90") -->
-
-<!-- par(mar = c(5, 4, 4, 2)) -->
-
-<!-- ``` -->
-
-<!--# <!--# <!--# <!--# <!--# <!--#  -->
+Lo que sigue es dejar de preguntar por pares y preguntar por la **combinación completa**. Eso es el análisis multivariado.
