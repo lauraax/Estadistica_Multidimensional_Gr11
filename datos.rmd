@@ -937,11 +937,89 @@ Este patrón nos muestra algo diferente a los análisis hasta ahora, puesto que 
 La interpretación más adecuada es que la ansiedad y la depresión actúan de forma contraria sobre el uso del celular: la ansiedad pega a la persona a la pantalla mientras que la depresión le quita el interés, incluso por las redes.
 
 ### 7. `social_comparison_1to10` vs `daily_screen_hours`
+```{r}
+g7 <- ggplot(completar_datos,
+       aes(x = factor(round(daily_screen_hours)), y = social_comparison_1to10)) +
+  geom_boxplot(fill = "thistle", outlier.alpha = 0.15, outlier.size = 0.8) +
+  labs(title = "Comparación social según horas de pantalla",
+       x = "Horas diarias de pantalla (redondeadas)", y = "Comparación social (1-10)") +
+  theme_minimal(base_size = 13)
+
+q <- quantile(completar_datos$daily_screen_hours, c(.25, .75))
+bajo <- completar_datos$social_comparison_1to10[completar_datos$daily_screen_hours <= q[1]]
+alto <- completar_datos$social_comparison_1to10[completar_datos$daily_screen_hours >= q[2]]
+c(sc_q1 = round(mean(bajo), 2), sc_q3 = round(mean(alto), 2),
+  dif_puntos = round(mean(alto) - mean(bajo), 2))
+
+c(pearson  = round(cor(completar_datos$daily_screen_hours,
+                       completar_datos$social_comparison_1to10), 3),
+  spearman = round(cor(completar_datos$daily_screen_hours,
+                       completar_datos$social_comparison_1to10,
+                       method = "spearman"), 3))
+g7
+```
+El gráfico muestra cómo las medianas de comparación social van subiendo de forma escalonada a medida que aumentan las horas frente a la pantalla.
+
+Mientras que las personas en el cuartil de menor uso ($\le 1.8$ horas) registran un puntaje promedio de 4.57, quienes están en el cuartil de mayor uso ($\ge 4.3$ horas) suben a 6.35 puntos (una diferencia de $+1.78$ en la escala).
+
+¿Qué nos dice esto? Pasar más tiempo en redes expone de forma constante a la vida "idealizada" que otros publican. No es un salto repentino, sino un desgaste paulatino: entre más tiempo se pasa consumiendo contenido ajeno, mayor es la tendencia a medir el valor o estilo de vida propio en función de los demás.
 
 ### 8. `loneliness_1to10` vs `daily_screen_hours`
+```{r}
+g8 <- ggplot(completar_datos,
+       aes(x = factor(round(daily_screen_hours)), y = loneliness_1to10)) +
+  geom_boxplot(fill = "khaki1", outlier.alpha = 0.15, outlier.size = 0.8) +
+  labs(title = "Soledad según horas de pantalla",
+       x = "Horas diarias de pantalla (redondeadas)", y = "Soledad (1-10)") +
+  theme_minimal(base_size = 13)
+
+q <- quantile(completar_datos$daily_screen_hours, c(.25, .75))
+bajo <- completar_datos$loneliness_1to10[completar_datos$daily_screen_hours <= q[1]]
+alto <- completar_datos$loneliness_1to10[completar_datos$daily_screen_hours >= q[2]]
+c(lon_q1 = round(mean(bajo), 2), lon_q3 = round(mean(alto), 2),
+  dif_puntos = round(mean(alto) - mean(bajo), 2))
+
+c(pearson  = round(cor(completar_datos$daily_screen_hours,
+                       completar_datos$loneliness_1to10), 3),
+  spearman = round(cor(completar_datos$daily_screen_hours,
+                       completar_datos$loneliness_1to10,
+                       method = "spearman"), 3))
+g8
+```
+Este es un caso particular, las medianas de horas de pantalla bajan con el puntaje de ánimo bajo: ≈4 h en puntaje 0, La gráfica refleja un patrón ascendente claro: las cajas se van desplazando hacia arriba a medida que se acumulan horas diarias de uso.
+
+El grupo con menor tiempo de pantalla promedia 3.89 en la escala de soledad, mientras que el grupo con mayor exposición digital alcanza los 5.67 puntos (un aumento de $+1.78$).
+
+¿Qué nos dice esto? Aunque las redes sociales prometen conectar a la gente, un uso desmedido suele desplazar la interacción cara a cara y las relaciones profundas por un consumo pasivo. La pantalla funciona como un sustituto que calma momentáneamente la desconexión, pero que a largo plazo termina acentuando la sensación de aislamiento.
 
 ### 9. `anxiety_score_0to27` vs `daily_notifications`
+```{r}
+g9 <- ggplot(completar_datos,
+             aes(x = daily_notifications, y = anxiety_score_0to27)) +
+  geom_point(alpha = 0.12, color = "steelblue") +
+  geom_smooth(method = "lm", color = "firebrick", se = TRUE) +
+  labs(title = "Ansiedad según notificaciones diarias",
+       x = "Notificaciones diarias", y = "Puntaje de ansiedad (0-27)") +
+  theme_minimal(base_size = 13)
 
+q_notif <- quantile(completar_datos$daily_notifications, c(.25, .75))
+bajo_notif <- completar_datos$anxiety_score_0to27[completar_datos$daily_notifications <= q_notif[1]]
+alto_notif <- completar_datos$anxiety_score_0to27[completar_datos$daily_notifications >= q_notif[2]]
+c(anx_notif_q1 = round(mean(bajo_notif), 2), anx_notif_q3 = round(mean(alto_notif), 2),
+  dif_puntos = round(mean(alto_notif) - mean(bajo_notif), 2))
+
+c(pearson  = round(cor(completar_datos$daily_notifications,
+                       completar_datos$anxiety_score_0to27), 3),
+  spearman = round(cor(completar_datos$daily_notifications,
+                       completar_datos$anxiety_score_0to27,
+                       method = "spearman"), 3))
+g9
+```
+A diferencia de los casos anteriores, aquí no comparamos horas de uso sino el impacto de las alertas. La nube de puntos muestra una inclinación positiva clara y continua.
+
+Quienes reciben pocas notificaciones al día ($\le 20$) registran una ansiedad promedio de 9.44 puntos. En cambio, quienes enfrentan un flujo constante de alertas ($\ge 83$ notificaciones) alcanzan los 13.57 puntos (un salto de $+4.13$ puntos sobre 27).
+
+¿Qué nos dice esto? Este es el único par destacado que no involucra directamente las horas frente a la pantalla, lo que revela un factor clave: el problema no es solo cuánto tiempo usas el celular, sino cuántas veces te interrumpe. Cada notificación genera un microestímulo de alerta o expectativa que rompe la concentración y mantiene al cerebro en un estado de hipervigilancia continua.
 
 <!-- ```{r} -->
 
